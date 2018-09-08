@@ -1,0 +1,38 @@
+/*PARTS
+=====
+1. Create a dynamic data base that can be used along with SPE
+:Which returns data related to a particular object
+2.A seperate exe file which works one a dbf file 
+:has the ability to modify the database
+Employes A Calculator(SIMPLE )
+*/
+
+//headers
+#include <stdio.h>
+#include <conio.h>
+#include <string.h>
+
+class database 
+
+{
+	struct records
+	{
+	union cell
+	{
+	double number;
+	char c;
+	char string [256];	
+	};
+	};
+}
+
+
+int check_file()
+{
+}
+
+void main()
+{
+check_file ();
+load
+}

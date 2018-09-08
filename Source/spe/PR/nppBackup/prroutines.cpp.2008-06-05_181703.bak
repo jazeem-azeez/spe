@@ -1,0 +1,52 @@
+/*
+on the basis of
+
+*/
+
+class particle
+{
+public:
+
+float x,y,z;
+float vel,mass,e;
+float KE ;
+
+float vel_af_coll(float mass1)
+{
+/*
+*buggy*
+//is only for perfectly elastic
+vel=((mass-mass1)/mass+mass1)*vel);
+return(((2*mass*vel)/mass+mass1))*/
+}
+
+};
+
+float acceleration(float vel,float time)
+{
+if(time==0)
+return 0.0;
+else
+return (vel/time);
+}
+
+float kinetic_energy(float mass,float vel)
+{
+return(0.5*mass*vel);
+}
+
+float force(float mass ,float acce)
+{
+return (mass*acce);
+}
+
+float momentum(float mass,float vel)
+{
+return (mass*vel);
+}
+
+float work(float force,float disp)
+{
+return (force*disp);
+}
+

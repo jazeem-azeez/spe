@@ -1,0 +1,7 @@
+PARTS
+=====
+1. Create a dynamic data base that can be used along with SPE
+:Which returns data related to a particular object
+2.A seperate exe file which works one a dbf file 
+:has the ability to modify the database
+Employes A Calculator(SIMPLE )

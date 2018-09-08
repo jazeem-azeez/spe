@@ -1,0 +1,32 @@
+# include <graphics.h>
+# include <c:\spe\GL\glrtns.h>
+# include <c:\spe\lib\lib.h>
+# include <c:\spe\GL\image.h>
+# include <c:\spe\GL\adtvs.h>
+# include <c:\spe\GL\mathd.h>
+
+/*
+==================================GL DESIGN/ARCHITECTURE==========================
+||						     ==========================					||	
+||																||
+||						          ------------------------------------ GL-------------------------	||
+||							|		|		 /      \			| 	||
+||							|		|		|	|			|	||
+||	----------------------------------------------lib.h	mathd.h	glroutines	additives.cpp	|	||
+||	|						|		|					|	|	||
+||	|						|		|					|	|	||
+||asm_lib.h		-------------------------    dev.h		math3d.h			vector.cpp	|	||
+||			|	|		   /    \			------------------------------- image.cpp	||
+||			|	|		  |	|			|		|		|		||
+||			|	|	disk.cpp	mouse.cpp		|		|		|		||
+||			|	|						|		|		|		||
+||			|	|					Xbitmap.cpp	pcx.h		bmp.h		||
+||		  sound.cpp	processor.cpp										||
+|_________________________________________________________________________|
+=======================================================================================
+glroutines //glrtns
+additives //adtvs
+*/
+/*
+
+*/

@@ -1,0 +1,7 @@
+renamed ->Camara
+prod_cruz ->crosspdt
+norma ->normal
+prod_punto->dotpdt
+unitario->unitarrow
+renamed ->object
+arista ->axis

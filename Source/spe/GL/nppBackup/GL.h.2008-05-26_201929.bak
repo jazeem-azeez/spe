@@ -1,0 +1,14 @@
+# include <math3d.h>
+//architectrue
+/*
+									     gl
+									      |
+									math3d.h
+									/		\
+								mathd.h		vga.h
+												\
+												svga.h
+													\
+													svga256.h
+
+*/

@@ -1,0 +1,54 @@
+#include<c:\spe\GL\256.h>
+typedef struct
+{
+	unsigned short modeattributes;
+	unsigned char unused1[10];
+	void (far*switchbank)();	
+	unsigned char unused2[240];
+}modeinfo;
+
+void (far*switchbank)();	
+
+int bank;
+
+char getsvgainfo()
+{
+	unsigned char vesainfo[256];
+	asm mov ax,04f00h
+	asm les di, vesainfo
+	asm int 10h
+	asm cmp al,4h
+	asm jz done
+	return 0;
+	done:
+	return 1;
+}
+
+char getvesainfo()
+{
+	unsigned char vesainfo[256];
+	asm mov ax,04f00h
+	asm les di, vesainfo
+	asm int 10h
+	asm cmp al,4h
+	asm jz done
+	return 0;
+	done:
+	return 1;
+}
+		 
+int getvesamdeinfo(int mode,modeinfo far *mi)
+{
+	asm mov ax,4f01h
+	asm mov cx, mode
+	asm les di,mi
+	asm int 10h
+	return(mi->modeattributes&1);
+}
+		   
+void setvesamode	(int mode)
+{
+	asm mov ax,4f02h
+	asm mov bx, mode
+	asm int 10h
+}

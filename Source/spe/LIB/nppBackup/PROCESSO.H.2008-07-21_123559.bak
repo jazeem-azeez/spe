@@ -1,0 +1,43 @@
+#include <mem.h>
+#include <stdio.h>
+#include <float.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <process.h>
+#include <conio.h>
+
+#ifdef __cplusplus
+    typedef void (*fptr)(int);
+#else
+    typedef void (*fptr)();
+#endif
+
+jmp_buf reenter;
+
+/* define a handler for trapping floating
+   point errors */
+void float_trap(int sig)
+{
+   printf("Trapping floating point error,");
+   printf("signal is %d\n",sig);
+   printf("Press a key to continue\n");
+   getch();
+/*
+   reset the 8087 chip or emulator to clear
+   any extraneous garbage
+*/
+   _fpreset();
+/* return to the problem spot */
+   longjmp(reenter, -1);
+}
+
+int setup_float_exception(void)
+{
+/*
+   install signal handler for floating point
+   exception
+*/
+   signal(SIGFPE, (fptr)float_trap);
+   return 0;
+}
+

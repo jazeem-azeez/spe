@@ -1,0 +1,11 @@
+#include <stdio.h>
+#include <conio.h>
+#include <dos.h>
+
+void main()
+{
+clrscr();
+long limit=100000,i;
+for(i=0;i<limit;i++,printf("%ld",i));
+getch();
+}

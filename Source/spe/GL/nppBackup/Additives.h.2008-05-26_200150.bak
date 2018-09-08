@@ -1,0 +1,24 @@
+int fliptext(char word[64])
+
+
+    {
+    outtextxy(10, 1, word);
+    for(x=10; x < 4 * 8 * strlen(word) + 8; x++)
+
+
+        	{
+        	for(y=0; y<30; y++)
+
+
+            		{
+            		col = getpixel(x, y);
+            		if(col > 0)
+
+
+                			{
+                			putpixel(x, 60 - y, 3);
+                			}
+                		}
+                	}
+                	getch();
+            }

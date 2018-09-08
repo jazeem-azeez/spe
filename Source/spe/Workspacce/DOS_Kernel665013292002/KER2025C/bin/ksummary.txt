@@ -1,0 +1,5 @@
+        Summary of all kernels build
+The current date is: Mon 07/21/2008 
+Enter the new date: (mm-dd-yy) 
+The current time is: 12:22:13.70
+Enter the new time: 

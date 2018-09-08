@@ -1,0 +1,9 @@
+#include <dos.h>
+
+int main(void)
+{
+   sound(120);
+   delay(250);
+   nosound();
+   return 0;
+}

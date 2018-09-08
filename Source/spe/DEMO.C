@@ -1,0 +1,73 @@
+/* This is a demo program to show how to use the functions defined in the
+   cursor.h header file. Please, open and read cursor.h */
+
+#include"cursor.h"
+#include<graphics.h>
+#include<stdlib.h>
+
+void main(void)
+{
+	int driver=VGA,mode=VGAHI,error_code;
+	randomize();
+	initgraph(&driver,&mode,NULL);
+
+	error_code=graphresult();
+	if(error_code!=grOk)
+	{
+		printf("\nGRAPHICS ERROR: %s.\nPress any key to abort program. . .",grapherrormsg(error_code));
+		getch();
+		exit(EXIT_FAILURE);
+	}
+
+	/* One thing to note is that when you use the function setbkcolor(). The
+	   value of the current background color is masked so the color changes so
+	   in order to use an alternative function use the two lines of code
+	   defined below. */
+	setfillstyle(SOLID_FILL,random(16));
+	bar(0,0,639,479);
+
+
+	{
+		union REGS regs;
+
+		/* Initalizing the mouse */
+		regs.x.ax=0;
+		int86(51,&regs,&regs);
+
+		/* Setting the mouse window so that the mouse pointer stays within a
+		   certain area.	*/
+		regs.x.ax=7;
+		regs.x.cx=0;
+		regs.x.dx=639;
+		int86(51,&regs,&regs);
+		regs.x.ax=8;
+		regs.x.cx=0;
+		regs.x.dx=479;
+		int86(51,&regs,&regs);
+	}
+
+
+	/* This part of the code is use to get the cursor image from the cursor
+	   file and then pass it to the setmousecursor() function */
+	{
+
+		MOUSECURSOR mousecursor;
+		unsigned char element,*file_name[3]={"MDR_STD.CUR",
+											 "MDR_HAND.CUR",
+											 "MDR_TEXT.CUR"};
+
+		for(element=0;element<3;element++)
+		{
+			if(readcursorfile(file_name[element],&mousecursor)!=FILE_READ_SUCCESSFULLY)
+			{
+				printf("FILE READING ERROR: Mouse cursor file cannot be read.");
+				getch();
+				exit(EXIT_FAILURE);
+			}
+			setmousecursor(mousecursor);
+			showmouse();
+			getch();
+		}
+	}
+	closegraph();
+}

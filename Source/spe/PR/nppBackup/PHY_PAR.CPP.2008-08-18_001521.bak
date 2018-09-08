@@ -1,0 +1,199 @@
+#include <conio.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define ismoving	1
+#define isrotating	1
+
+
+
+
+
+
+int reactor_engine_data_update_link( particle *pr);
+
+class particle
+{
+public:
+	clock_t start, end,lasttimestamp,delta_t;
+	vec3d pos,lpos,Rpos,LRpos;
+	vec3d vel,distance,theta,omega;
+	float acc,trq;
+	float mass;
+	float TKE,RKE;
+
+	void getdata()
+	{
+	cout<<"Position Vector details\n" ;
+	cin>>pos.x>>pos.y>>pos.z>>Rpos.x>>Rpos.y>>Rpos.z;
+	cout<<"\nVelocity vector";
+	cin>>vel.x>>vel.y>>vel.z;
+	cout<<"\nTheta vector";
+	cin>>theta.x>>theta.y>>theta.z;
+	}
+	void putdata()
+	{
+	cout<<"Position Vector details\n" ;
+	cout<<"("<<pos.x<<","<<pos.y<<","<<pos.z<<")"<<",";
+	cout<<"("<<Rpos.x<<","<<Rpos.y<<","<<Rpos.z<<")";
+	cout<<"\nVelocity vector";
+	cout<<"("<<vel.x<<","<<vel.y<<","<<vel.z<<")";
+	cout<<"\nTheta vector";
+	cout<<"("<<theta.x<<","<<theta.y<<","<<theta.z<<")";
+	}
+	void changeposition(vec3d v1,vec3d v2)
+	{
+	pos=v1;
+	Rpos=v2;
+	}
+
+	void changevel(vec3d v1)
+	{
+	vel=v1;
+	}
+
+	void changeomega(vec3d v1)
+	{
+	omega=v1;
+	}
+
+	void changeacc(float a)
+	{
+	acc=a;
+	}
+
+	void changemass(float a)
+	{
+	mass=a;
+	}
+
+	void changetorque(float a)
+	{
+	trq=a;
+	}
+
+	void updateposition()
+	{
+	lpos=pos;
+	distance=vel*delta_t;
+	pos=pos+distance;
+
+	LRpos=Rpos;
+	theta=omega*delta_t;
+	Rpos=rotate_Deg(Rpos,theta.x,theta.y,theta.z);
+
+	}
+
+	void 	update_vel_AND_omega()
+	{
+	vel.normalize();
+	vel=vel*acc*(end-start);//velocity=accelaration*total time
+	omega.normalize();
+	omega=omega*trq*(end-start);
+	}
+
+	void 	updateKE()
+	{
+	TKE=0.5*mass*(vel.length()*vel.length());
+	RKE=0.5*mass*(omega.length()*omega.length());
+	}
+
+	void	update()
+	{
+	update_vel_AND_omega();
+	updateKE();
+	updateposition();
+	}
+
+}*pr;
+  /*
+int reactor_engine_data_update_link(class particle *px)
+{
+	FLOAT_EXCEPTION
+	{
+		px->update();
+		continue;
+	}
+	else
+	{
+		log("FLOAT ERROR");
+		log("object count");
+		log((" "+max_particle));
+	}
+
+}
+return 0;
+}
+*/
+ /*
+
+
+#include <stdio.h>
+#include <float.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <process.h>
+#include <conio.h>
+
+#ifdef __cplusplus
+    typedef void (*fptr)(int);
+#else
+    typedef void (*fptr)();
+#endif
+
+jmp_buf reenter;
+
+// define a handler for trapping floating   point errors
+void float_trap(int sig)
+{
+   printf("Trapping floating point error,");
+   printf("signal is %d\n",sig);
+   printf("Press a key to continue\n");
+   getch();
+
+//   reset the 8087 chip or emulator to clear
+ // any extraneous garbage
+
+   _fpreset();
+// return to the problem spot
+   longjmp(reenter, -1);
+}
+
+
+int main()
+{
+signal(SIGFPE, (fptr)float_trap);
+
+ int gdriver = DETECT, gmode, errorcode;
+initgraph(&gdriver, &gmode, "");
+line(0, 0, getmaxx(), getmaxy());
+delay(1000);
+//xscale=1.5,yscale=1.5;
+cleardevice();
+p1.getdata();
+drawaxis(5);
+p1.draw();
+delta_t=2;
+end=1;
+start=0;
+p1.acc=1;
+if (setjmp(reenter) == 0)
+   {
+
+while(!kbhit())
+{
+p1.pos=rotate_Deg(p1.pos,0.0);
+p1.update();
+
+p1.draw();
+}
+getch();
+closegraph();  }
+
+else
+printf("Floating point error");
+return 0;
+
+}           */

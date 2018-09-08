@@ -1,0 +1,6 @@
+//1.include and debug headers
+//list of headers
+# include "headerlist.cpp"
+void main()
+{
+}

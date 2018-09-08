@@ -1,0 +1,5 @@
+#include <Xbitmap.cpp>
+#includec <bmp.h>
+//#include <Xpcx.cpp>
+#include <pcx.cpp>
+	

@@ -1,0 +1,6 @@
+# include <dos.h>
+# include <stdio.h>
+# include <conio.h>
+
+//class pcx
+

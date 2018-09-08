@@ -1,0 +1,50 @@
+#include <conio.h>
+#include <math.h>
+#include <stdio.h>
+#include <process.h>
+#include <stdlib.h>
+
+typedef struct {float x;floaty;} complex;
+typedef struct {unsigned short modeattributes;
+                unsigned char unused[10];
+                void (far *switchbank)();
+                unsigned char unused2 [240];
+                }modeinfo;
+                
+void (far *switchbank)();
+int bank;
+
+int getsvgainfo()
+{
+    unsigned char vesainfo[256];
+    asm mov ax,04f00h
+    asm les di ,vesainfo
+    asm int 10h
+    asm cmp al,4fh
+    asm jz done
+    return 0;
+    done:
+    return 1;
+}
+
+int getvesainfo()
+{
+    unsigned char vesainfo[256];
+    asm mov ax,4f00h
+    asm les di,vesainfo
+    asm int 10h
+    asm cmp al,4fh
+    asm jz done
+    return 0;
+    done:
+    return 1;
+}
+int getvesamdeinfo (int mode,modeinfo far *mi)
+{
+    asm mov ax, 4f01h
+    asm mov cx,mode
+    asm les di,mi
+    asm int 10h
+    
+}
+

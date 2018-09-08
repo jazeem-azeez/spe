@@ -1,0 +1,17 @@
+#include <stdio.h>
+#include <dir.h>
+
+int main(void)
+{
+   char *p;
+
+   /* Looks for TLINK and returns a pointer to the path  */
+   p = searchpath("initsvga.c");
+   printf("Search for initsvga.c : %s\n", p);
+
+   /* Looks for non-existent file  */
+   p = searchpath("NOTEXIST.FIL");
+   printf("Search for NOTEXIST.FIL : %s\n", p);
+
+   return 0;
+}

@@ -1,0 +1,112 @@
+
+//list of headers
+# include "headerli.cpp"
+# include "c:\spe\my_app\app_lin.cpp"
+int setup_platform();
+int setdown_platfrom();
+int Application();
+
+int Show_files(char []);
+
+ void main()
+{
+int i=0;
+RESTART:
+setup_platform();
+cleardevice();
+Enlarge(400,300,"DONE");
+Reduce(400,300,"DONE");
+delay(500);
+cleardevice();
+glsetup(1);
+if(Application()!=0)
+{
+printf("\nSome bug caused the program to abort the operation");
+printf("\n\t plase contact your administrator");
+printf("\nTrying to restart platform");
+for(i=0;i<80;i++);
+cout<<".";
+_cexit();
+setdown_platfrom();
+printf("\n Do tou Want to Try [y] :");
+if(getch()=='y')
+goto RESTART;
+exit(1);
+}
+
+exit(setdown_platfrom());
+}
+setdown_platfrom()
+{
+textmode(0x3);
+restorecrtmode();
+printf("Exiting \n returned to textmode");
+closegraph();
+printf("\n\tThank you\n\t Press any key to exit");
+playwav("thanku.wav");
+getch();
+return 0;
+}
+setup_platform()
+{
+textbackground(BLUE);
+textcolor(LIGHTGREEN);
+highvideo();
+clrscr();
+printf("\n\tStarting : ");
+delay(500);
+printf("\nPlease check prerequesties\n\nShowing available files list in the current active directory: \n");
+printf("\nName\t\tSize");
+delay(500);
+Show_files("*.gld");
+Show_files("*.bgi");
+delay(500);
+printf("\n\tPlease Wait ...");
+delay(500);
+printf("\nInstalling & setup Devices and Handlers");
+delay(500);
+setup_float_exception();
+printf("\nSound device is being setup 0x220\t");
+delay(500);
+if (ResetDSP(0x220)==1)
+printf("\Found and Reset");
+else
+printf("FAILED\n");
+delay(500);
+printf("\nSound device is being setup 0x22f\t");
+delay(500);
+if (ResetDSP(0x22f)==1)
+printf("\nFound and Reset");
+else
+printf("FAILED\n");
+delay(500);
+playwav("init.wav");
+initsvga();
+InitMouse();
+printf("\n\t\t\t\tPreparing Graphics (GL)\n Initializing VESA 800X600 MODE\n");
+delay(2000);
+SetMode(_800x600,0);
+delay(500);
+return 0;
+}
+int Show_files(char str[16])
+{
+  struct find_t ffblk;
+  int done;
+  done = _dos_findfirst(str,_A_NORMAL,&ffblk);
+  while (!done) {
+  if(!kbhit())
+    {
+    printf("\nFilename_> %s\n\t\t\tSize = %ld -bytes,\tdate stamp  = 0x%x\n",ffblk.name,ffblk.size,ffblk.wr_time);
+    delay(500);
+    done = _dos_findnext(&ffblk);
+    }
+    else
+    {
+    getch();
+    printf("Press any key to continue");
+    getch();
+    }
+  }
+  return 0;
+}

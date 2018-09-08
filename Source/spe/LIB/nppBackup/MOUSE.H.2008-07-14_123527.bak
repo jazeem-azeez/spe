@@ -1,0 +1,694 @@
+#ifndef MOUSEH_H
+#define MOUSEH_H
+
+#include <process.h>
+#include <dos.h>
+#include <string.h>
+#define XMAX 800
+#define YMAX 600
+typedef unsigned int WORD;
+typedef unsigned char BYTE;
+
+static void huge MouseHandler();
+void DrawCursor(BYTE);
+int InitMouse();
+int CheckMouse();
+int ResetMouse();
+void PutMousePixel(WORD,WORD);
+void ShowMouse();
+void HideMouse();
+/*
+NOTE:
+Mouse drivers dont update mouse cursors in SVGA modes
+and hence we need to explicitly draw the mouse cursor
+and install a mouse handler to recognize mouse events.
+*/
+
+
+int flag=0;
+unsigned int _x=0,_y=0,_b=0;    // x y and button variable
+int _xminm=0,_yminm=0,_xmaxm=800,_ymaxm=600;
+BYTE _showMouseStatus=1,_wrapAround=0;
+const BYTE *_cursor;
+const BYTE *_tool;
+const BYTE *_temp;
+BYTE _arrow[]=
+			{
+			1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+			1, 1, 0, 1, 1, 1, 1, 1, 0, 0,
+			1, 1, 0, 0, 1, 1 ,1, 1 ,1, 0,
+			1, 0, 0, 0 ,0, 1, 1, 1, 1, 1,
+			0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+			0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
+		       };
+
+BYTE _eraser[]=         {
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0 ,0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		       };
+
+BYTE _cross[]=         {
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+			1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+			1, 1, 0, 1, 1, 1, 0, 0, 0, 0,
+			1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 0, 0 ,0, 0, 0, 0,
+			1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		       };
+BYTE _free[]=         {
+			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+			1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+			1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+			1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+			1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0 ,0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		       };
+BYTE _caret[]=         {
+			1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0 ,0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+		       };
+
+BYTE _fill[]=         {
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 1, 1, 1, 0, 0, 0, 0, 0,
+			0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+			0, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0, 1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0, 1, 0, 0, 0, 1,
+			0, 0, 1, 1, 0, 1, 1, 1, 1, 1,
+			0, 0, 0, 1, 0, 1, 1, 1, 1, 1,
+			0, 0, 0, 1, 0, 1, 1, 1, 1, 1,
+			0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+		       };
+BYTE _brush[]=         {
+			1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
+			1, 0, 1, 1, 0, 0, 1, 1, 0, 0,
+			0, 0, 0, 0, 1, 1, 1, 1, 1, 0,
+			1, 1, 1, 1, 0, 1, 1, 1, 1, 0,
+			0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
+			1, 0, 0, 0, 0, 1, 0, 0 ,1, 0,
+			0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
+			0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
+			0, 0, 0, 0, 0, 1, 1, 1, 1, 0,
+		       };
+
+BYTE _larrow[]=         {
+			1,1,1,0,1,1,1,1,1,1,
+			1,0,0,1,0,0,0,0,1,0,
+			1,0,0,0,0,1,1,1,0,0,
+			0,1,0,0,0,0,1,0,0,0,
+			1,0,0,0,0,0,0,1,0,0,
+			1,0,1,0,0,0,0,0,1,0,
+			1,0,1,1,0,0,0,0,0,1,
+			1,0,1,0,1,0,0,0,0,1,
+			1,1,0,0,0,1,0,0,0,1,
+			1,0,0,0,0,0,1,1,1,1,
+		       };
+
+
+
+//----------------------------------------------
+
+void HideMouse()
+ {
+  if(!_showMouseStatus)  return;
+  DrawCursor(0);
+  _showMouseStatus=0;
+ }
+
+static void far _loadds MouseHandler()
+{
+	int x1=0,y1=0;
+	static int inMouseHandler;
+	if(inMouseHandler)return;
+	inMouseHandler=1;
+
+	//ASSEMBLY BLOCK
+	_asm mov _b,bx
+	_asm mov ax,0x0b
+	_asm int 0x33
+	_asm mov x1,cx
+	_asm mov y1,dx
+	//ASSEMBLY BLOCK ENDS
+
+	x1+=_x;	y1+=_y;
+	if(_wrapAround)
+	{
+		if(x1>=_xmaxm)x1-=_xmaxm;
+		else if(x1<_xminm)x1+=_xmaxm;
+		if(y1>=_ymaxm)y1-=_ymaxm;
+		else if(y1<_yminm)y1+=_ymaxm;
+	}
+	else
+	{
+		if(x1>=_xmaxm)x1=_xmaxm-1;
+		else if(x1<_xminm)x1=_xminm;
+		if(y1>=_ymaxm)y1=_ymaxm-1;
+		else if(y1<_yminm)y1=_yminm;
+	}
+	_x=x1;
+	_y=y1;
+	if(_showMouseStatus)
+		  DrawCursor(1);
+	inMouseHandler=0;
+}
+
+//----------------------------------------------
+void DrawCursor(BYTE mode)
+{
+	unsigned int i,j,t=0;
+	BYTE c;
+	static int inDrawCursor=0;
+	static WORD x=0,y=0;
+	if(inDrawCursor)return;
+	inDrawCursor=1;
+	if(mode<2)
+	{
+		for(i=0;i<10;i++)
+			for(j=0;j<10;j++)
+				if(_cursor[t++])
+					PutMousePixel(x+j,y+i);
+	}
+	x=_x;
+	y=_y;
+	if(mode)
+	{
+		t=0;
+		for(i=0;i<10;i++)
+			for(j=0;j<10;j++)
+				if(_cursor[t++])
+					PutMousePixel(x+j,y+i);
+	}
+	inDrawCursor=0;
+}
+
+//-----------------------------------------------------
+
+int InitMouse()
+{
+
+  unsigned int segmt=FP_SEG(&MouseHandler);
+  unsigned int off=FP_OFF(&MouseHandler);
+  unsigned int buttons;
+  int m,n;
+  m=CheckMouse();
+  if(m==0)
+  {
+	textmode(0x3);
+	printf("Mouse driver not installed.  Exiting\n");
+	getch();
+	exit(1);
+  }
+  else
+	buttons=ResetMouse();
+	_cursor=(BYTE *)_arrow;
+
+	//ASSEMBLY BLOCK
+	_asm mov cx,31      //cx takes event mask
+	_asm mov dx,off     //which specifies for what all
+	_asm mov es,segmt   //events the mouse handler is called
+	_asm mov ax,0x0c    //11111 i.e movement,left press, left release
+	_asm int 0x33       //right press and right release
+	_asm mov al,0x0f
+	_asm mov cx,1
+	_asm mov dx,1
+	_asm int 0x33
+	//ASSEMBLY BLOCK ENDS
+
+	_x=0;
+	_y=0;
+	MouseHandler();
+	ShowMouse();
+	return buttons;
+}
+//--------------------------------------------------------
+
+int CheckMouse()
+{
+	unsigned char far *f=(unsigned char far *)getvect(0x33);
+	unsigned buttons;
+	if(f==0 || *f==0xcf)
+		return 0;
+	return 1;
+}
+//---------------------------------------------------------
+int ResetMouse()
+{
+	int buttons;
+
+	//ASSEMBLY BLOCK
+	_asm mov al,0x00
+	_asm int 0x33
+	_asm mov buttons,bx
+	//ASSEMBLY BLOCK ENDS
+
+	return buttons;
+}
+
+//-------------------------------------------------
+
+void ShowMouse()
+{
+	if(_showMouseStatus)return;
+	DrawCursor(2);
+	_showMouseStatus=1;
+}
+//-----------------------------------------
+
+void PutMousePixel(WORD x,WORD y)
+{
+	if(x>=XMAX || y>=YMAX)return;
+	PutPixel(x,y,0xffff^GetPixel(x,y));
+	//here the color 255-present color is used
+	//to draw mouse. It is same as 255 XOR color
+	//or we can use abs(255-colorval) but XOR is faster
+	//hence use it.
+}
+
+//--------------------------------------
+
+# define RIGHT		0
+# define LEFT  		1
+# define UP		2
+# define DOWN		3
+# define UPRIGTH 	4
+# define UPLEFT 	5
+# define DOWNRIGHT	6
+# define DOWNLEFT	7
+# define NOTMOVED 	9
+
+int CHARWIDTH=14, CHARHEIGHT=24;
+
+       /*
+union REGS i,o;
+struct SREGS s;
+
+	    */
+
+int getmouseptr(int *button,int *x,int *y)
+
+  {
+    i.x.ax=3;
+    int86(0x33,&i,&o);
+    *button=o.x.bx;
+    *x=o.x.cx;
+    *y=o.x.dx;
+    return 0;
+  }
+
+class mouse
+{
+public:
+	int button,x,y,oldxx,oldyy,clickbtn;
+	int click_delay;
+	int initmouse();
+	//void showmouseptr();
+	void restrictmouseptr(int x1,int y1,int x2,int y2);
+	void getmousepos();
+	void hidemouseptr();
+	int init_mouse(void);//initialize mouse
+    //void show_mouseptr(void);//show mousepointer bcs svga conflict
+    void hide_mouseptr(void);//hide mousepointer
+    void restrict_mouseptr_movement(int,int,int,int);//restrict mouse pointer's movement
+    void get_mouse_pos(int*,int*,int*);//tells the actual mouse pointer's position
+    void change_mousepointer_hourglass(void);//changes pointer to hourglass
+    void change_mousepointer_hand(void); //changes pointer to hand
+    void change_mousepointer_arrow(void);//changes pointer to arrow
+    void change_mousepointer_pencil(void);//changes pointer to pencil
+    void change_mousepointer_eraser(void);//changes pointer to eraser
+    void make_slow_ptr(void);//make slow pointer movement
+    void make_fast_ptr(void);//make fast pointer movement
+    void make_medium_ptr(void);//make medium pointer movement
+	ismouse(int x1,int y1,int x2,int y2);
+	int click(int x1,int y1,int x2,int y2);
+	int moving( );
+
+
+	void togglemouse()
+
+	{
+	if(clickbtn==1)
+	clickbtn+=1;
+	else
+	clickbtn-=1;
+	}
+
+	void setmouse(int x,int y)
+	{
+	i.x.ax=4;
+	int86(0x33,&i,&o);
+	i.x.cx=x;
+	int86(0x33,&i,&o);
+	i.x.dx=y;
+	int86(0x33,&i,&o);
+	}
+
+	void show_mouse_cord(int sx,int sy)
+	{
+	getmousepos();
+	setcolor(BLACK);
+	char str1[23],str2[6];
+	itoa(x,str1,10);
+	itoa(y,str2,10);
+	strncat(str1," x ",3);
+	strncat(str1,str2,4);
+	bar(sx-1,sy-1,sx+CHARWIDTH*7,sy+CHARHEIGHT);
+	outtextxy(sx,sy,str1);
+	delay(10);
+	}
+void changespeed(unsigned int ratio)/*higher value lower speed*/
+{
+	union REGS  inreg, outreg;
+	inreg.x.ax=0xf;
+	inreg.x.bx=0;
+	inreg.x.cx=ratio;
+	inreg.x.dx=ratio;
+	int86(0x33,&inreg,&outreg);
+}
+
+void changeacceleration(unsigned int a)/*default=64*/
+{
+	union REGS  inreg, outreg;
+	inreg.x.ax=0x12;
+	inreg.x.dx=a;
+	int86(0x33,&inreg,&outreg);
+}
+
+}m;
+
+int mouse::initmouse()
+  {
+  InitMouse();
+  /*clickbtn=1;
+   i.x.ax=0x4500;
+   i.h.bl=0;
+   i.x.dx=640;
+   int86(0x33,&i,&o);
+   return(o.x.ax);*/
+   return 0;
+  }
+	/*
+
+void mouse:: showmouseptr()
+  {
+  i.x.ax=0x0001;
+//  int86(0x33,&i,&o);
+  int86x(0x33,&i,&o,&s);
+  }
+	  */
+
+void mouse:: hidemouseptr()
+  {
+  HideMouse();
+/*    i.x.ax=2;
+  //  int86(0x33,&i,&o);
+    int86x(0x33,&i,&o,&s);*/
+  }
+
+
+void mouse::restrictmouseptr(int x1,int y1,int x2,int y2)
+
+{
+_AX=7;
+_CX=x1;
+_DX=x2;
+geninterrupt(0x33);
+_AX=8;
+_CX=y1;
+_DX=y2;
+geninterrupt(0x33);
+}
+
+void mouse::getmousepos()
+{
+oldxx=x,oldyy=y;
+getmouseptr(&button,&x,&y);
+}
+
+int mouse::ismouse(int x1,int y1,int x2,int y2)
+
+{
+getmousepos();
+
+	if(x>x1 && x<x2 && y>y1 && y<y2)
+	{
+	//outtextxy(550,50,"clicked");
+return 1;
+	}
+	return 0;
+}
+
+int mouse::click(int x1,int y1,int x2,int y2)
+
+{
+getmousepos();
+
+	if(x>x1&&x<x2&&y>y1&&y<y2&&(button==clickbtn))
+	{
+	//outtextxy(550,50,"clicked");
+return 1;
+	}
+	return 0;
+}
+
+int mouse :: moving()
+
+{
+
+getmousepos();
+	if (x > oldxx && y == oldyy ) return RIGHT;
+	if (x < oldxx && y == oldyy ) return LEFT;
+	if (y < oldyy && x == oldxx ) return UP;
+	if (y > oldyy && x == oldxx) return DOWN;
+
+	if (x > oldxx && y > oldyy ) return UPRIGTH;
+	if (x > oldxx && y < oldyy ) return DOWNRIGHT;
+
+	if (x < oldxx && y > oldyy ) return UPLEFT;
+	if (x < oldxx && y < oldyy ) return DOWNLEFT;
+
+return 9;
+}
+     /*
+int  mouse :: doubleclick(int x1,int y1,int x2,int y2)
+{
+clock_t start, end;
+getmousepos();
+short ans=0;
+start = clock();
+if(x>x1&&x<x2&&y>y1&&y<y2&&(button==clickbtn))
+	{
+	ans=1;
+	button=0;
+       for(;( (end - start)/CLK_TCK)>=click_delay);)
+		{
+		end = clock();
+		getmousepos();
+		if(x>x1 && x<x2 && y>y1 && y<y2 && (button==clickbtn))
+			{
+			ans=2;
+			break;
+			}
+		}
+	}
+return ans;
+}      */
+void change_cursor(int *shape)
+{
+	i.x.ax=9;
+	i.x.bx=0;
+	i.x.cx=0;
+	i.x.dx=(unsigned)shape;
+	segread(&s);
+	s.es=s.ds;
+	int86x(0x33,&i,&o,&s);
+}
+void set_mouse_position(int x,int y)
+{
+	i.x.ax=4;
+	i.x.cx=x;
+	i.x.dx=y;
+	int86(0x33,&i,&o);
+}
+    int mouse::init_mouse(void)//initialize mouse if success return 0
+    {                                 //else return -1
+	   i.x.ax=0;
+	   int86(0x33,&i,&o); return(o.x.ax==0 ? -1:0 );  }
+	  /*
+	  void mouse::show_mouseptr(void)
+    {      i.x.ax=1;
+	   int86(0x33,&i,&o);       }
+	   */
+	  void mouse::hide_mouseptr(void)
+    {     i.x.ax=2;
+	  int86(0x33,&i,&o);
+					     }
+	  void mouse::restrict_mouseptr_movement(int x1,int y1,int x2,int y2)
+    {      i.x.ax=7;
+	   i.x.cx=x1;
+	   i.x.dx=x2;
+	   int86(0x33,&i,&o);
+	   i.x.ax=8;
+	   i.x.cx=y1;
+	   i.x.dx=y2;
+	   int86(0x33,&i,&o);
+					 }
+          void mouse::get_mouse_pos(int* button,int* x,int* y)
+    {      i.x.ax=3;
+           int86(0x33,&i,&o);
+           *button=o.x.bx;
+           *x=o.x.cx;
+           *y=o.x.dx;
+                                   }
+          void mouse::change_mousepointer_hourglass(void)
+    {      int pointer_hourglass[32]={
+				/*hour-glass screen mask*/
+                                0x0000,0x0000,0x0000,0x0000,
+				0x8001,0xc003,0xf00f,0xfc3f,
+                                0xfc3f,0xf00f,0xc003,0x8001,
+                                0x0000,0x0000,0x0000,0x0000,
+                                /*the mouse pointer bitmap*/
+                                0xffff,0x8001,0xffff,0x8001,
+                                0x4002,0x2004,0x1008,0x0240,
+                                0x0240,0x0810,0x2004,0x4002,
+                                0x8001,0xffff,0x8001,0xffff,    };
+           i.x.ax=9;//service number
+           i.x.bx=0;//actual cursor position from left
+           i.x.cx=0;//actual cursor position from top
+           i.x.dx=(unsigned)pointer_hourglass;//offset address of pointer
+           segread(&s);
+           s.es=s.ds;//segment address of pointer
+           int86x(0x33,&i,&i,&s);                               }
+
+            void mouse::change_mousepointer_hand(void)
+    {      int pointer_hand[32]={
+				/*hand-screen mask*/
+                                0xe1ff,0xe1ff,0xe1ff,0xe1ff,
+				0xe1ff,0x0000,0x0000,0x0000,
+                                0x0000,0x0000,0x0000,0x0000,
+                                0x0000,0x0000,0x0000,0x0000,
+                                /*mouse pointer bitmap*/
+                                0x1e00,0x1200,0x1200,0x1200,
+                                0x13ff,0x1249,0x1249,0xf249,
+                                0x9001,0x9001,0x9001,0x8001,
+                                0x8001,0x8001,0xffff,0x0000,    };
+           i.x.ax=9;//service number
+           i.x.bx=0;//actual cursor position from left
+           i.x.cx=0;//actual cursor position from top
+           i.x.dx=(unsigned)pointer_hand;//offset address of pointer
+           segread(&s);
+           s.es=s.ds;//segment address of pointer
+           int86x(0x33,&i,&i,&s);                               }
+
+	   void mouse::change_mousepointer_arrow(void)
+    {      int pointer_arrow[32]={
+				/*arrow screen mask*/
+                                0xffff,0xffff,0xe003,0xf003,
+				0xf803,0xfc03,0xfe03,0xfc03,
+                                0xf803,0xf043,0xe0e3,0xc1f3,
+                                0x83fb,0x07ff,0x8fff,0xdfff,
+                                /*mouse pointer bitmap*/
+                                0x0000,0x0000,0x1ffc,0x0804,
+                                0x0404,0x0204,0x0104,0x0204,
+                                0x0444,0x08a4,0x1114,0x220c,
+                                0x4404,0x8800,0x5000,0x2000,    };
+           i.x.ax=9;//service number
+           i.x.bx=0;//actual cursor position from left
+           i.x.cx=0;//actual cursor position from top
+           i.x.dx=(unsigned)pointer_arrow;//offset address of pointer
+           segread(&s);
+           s.es=s.ds;//segment address of pointer
+           int86x(0x33,&i,&i,&s);                               }
+
+           void mouse::change_mousepointer_pencil(void)
+    {      int pointer_pencil[32]={
+
+                                /*pencil screen mask*/
+				0x00ff,0x007f,0x003f,0x001f,
+                                0x0011,0x0007,0x0000,0x0003,
+                                0x8001,0xc003,0xe007,0xf00f,
+                                0xf81f,0xfc3f,0xfe7f,0xfeff,
+                                /*mouse pointer bitmap*/
+                                0xff00,0x8100,0x8280,0x8440,
+                                0x8820,0x9010,0xa008,0xc005,
+                                0x2002,0x1004,0x0808,0x0410,
+                                0x0220,0x0140,0x0080,0x0100,
+                                                                 };
+           i.x.ax=9;//service number
+           i.x.bx=0;//actual cursor position from left
+           i.x.cx=0;//actual cursor position from top
+           i.x.dx=(unsigned)pointer_pencil;//offset address of pointer
+           segread(&s);
+           s.es=s.ds;//segment address of pointer
+           int86x(0x33,&i,&i,&s);                               }
+
+	    void mouse::change_mousepointer_eraser(void)
+    {      int pointer_eraser[32]={
+				/*eraser screen mask*/
+                                0x0000,0x0000,0x0000,0x0000,
+                                0x0000,0x0000,0x0000,0x0000,
+                                0x0000,0x0000,0x0000,0x0000,
+                                0x0000,0x0000,0x0000,0x0000,
+                                /*mouse pointer bitmap*/
+                                0xffff,0x8001,0x8001,0x8001,
+                                0x8001,0x8001,0x8001,0x8001,
+                                0x8001,0x8001,0x8001,0x8001,
+                                0x8001,0x8001,0x8001,0xffff,
+                                                                 };
+           i.x.ax=9;//service number
+           i.x.bx=0;//actual cursor position from left
+           i.x.cx=0;//actual cursor position from top
+           i.x.dx=(unsigned)pointer_eraser;//offset address of pointer
+           segread(&s);
+           s.es=s.ds;//segment address of pointer
+           int86x(0x33,&i,&i,&s);                               }
+
+               void mouse::make_slow_ptr(void)
+ {         i.x.ax=15;
+           i.x.cx=200;
+           i.x.dx=400;
+           int86(0x33,&i,&o);                                   }
+
+               void mouse::make_fast_ptr(void)
+ {         i.x.ax=15;
+           i.x.cx=3;
+           i.x.dx=3;
+           int86(0x33,&i,&o);                                   }
+
+               void mouse::make_medium_ptr(void)
+ {         i.x.ax=15;
+           i.x.cx=50;
+           i.x.dx=50;
+           int86(0x33,&i,&o);                                   }
+
+		  
+#endif

@@ -1,0 +1,97 @@
+# include <graphics.h>
+# include <c:\spe\lib\lib.h>
+# include <c:\spe\GL\glrtns.h>
+# include <c:\spe\GL\image.h>
+# include <c:\spe\GL\adtvs.h>
+# include <c:\spe\GL\mathd.h>
+  
+/*
+==================================GL DESIGN/ARCHITECTURE==========================
+||						     ==========================					||	
+||																||
+||						          ------------------------------------ GL-------------------------	||
+||							|		|		 /      \			| 	||
+||							|		|		|	|			|	||
+||	----------------------------------------------lib.h	mathd.h	glroutines	additives.cpp	|	||
+||	|						|		|		|			|	|	||
+||	|						|		|		BCM.h			|	|	||
+||asm_lib.h	---------------------------------    dev.h		math3d.h			vector.cpp	|	||
+||		|	|	|		   /    \			------------------------------- image.cpp	||
+||		|	|	|		  |	|			|		|		|		||
+||		|	|	|	disk.cpp	mouse.cpp		|		|		|		||
+||	VESA.h	|	|						|		|		|		||
+||			|	|					Xbitmap.cpp	pcx.h		bmp.h		||
+||		  sound.cpp	processor.cpp										||
+|_________________________________________________________________________|
+=======================================================================================
+glroutines //glrtns
+additives //adtvs
+*/
+/*
+
+*/
+point3d Camx,Zoomx,Transx;
+
+gllineobject obj1,obj2;
+int gltestrun()
+{
+HideMouse();
+point3d cam1,zoom1;
+cam1.x=0,cam1.y=0,cam1.z=0;
+//trans1.x=0,trans1.y=0,trans1.z=0;
+zoom1.x=1,zoom1.y=1,zoom1.z=1;
+setcamzoom(&zoom1);
+setcamera(&cam1);
+//setcamtrans(&trans1);
+cleardevice();
+highvideo();
+printf("\t\tTesting GL  for possible errors");
+printf("\nThe test is X&Cube rotating");
+printf("\nPress any key to start ");
+printf("\npress y if you see the test sucessful");
+readobj("cube.gld",obj1);
+readobj("glx.gld",obj2);
+aotrans(obj1,-obj1.cr.x,-obj1.cr.y,-obj1.cr.z);
+aoscale(obj1,80,80,80);
+aotrans(obj2,-obj2.cr.x,-obj2.cr.y,-obj2.cr.z);
+aoscale(obj2,9,9,9);
+setwritemode(XOR_PUT);
+camera_rot_on=TURN_ON;
+camera_zoom_on=TURN_ON ;
+camera_trans_on=TURN_ON;
+drawobj(obj1,11);
+drawobj(obj2,15);
+getch();
+drawobj(obj1,11);
+drawobj(obj2,15);
+for(;!kbhit();)
+{
+zoomcamera(zoom1,0.0,0.0,0.0);
+rotcamera(&cam1,0,1,1);
+aorot(obj2,5,5,0);
+drawobj(obj1,11);
+drawobj(obj2,15);
+delay(62);
+wait();
+drawobj(obj2,15);
+drawobj(obj1,11);
+}
+if('y'==getch())
+{
+gotoxy(40,25);printf("GL [status- ok]\n");
+return 0;}
+else
+return -1;
+}
+
+int glsetup(int c)
+{
+Camx.x=0,Camx.y=0,Camx.z=0;
+setcamera(&Camx);
+Zoomx.x=1.0,Zoomx.y=1.0,Zoomx.z=1.0;
+setcamzoom(&Zoomx);
+Transx.x=1.0,Transx.y=1.0,Transx.z=1.0;
+if(c)
+return(gltestrun());
+return 0;
+}

@@ -1,0 +1,17 @@
+
+void transresolver()
+
+{	
+
+}
+
+void rotresolver()
+
+{	
+
+}
+
+int resolve_collition(particle p)
+{
+
+}

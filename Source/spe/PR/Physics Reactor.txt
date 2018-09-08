@@ -1,0 +1,8 @@
+PARTS
+======
+1.Create A loading manipulation Interface VIA Help of GL
+2.Create a physics reactor core which runs and updates the objects and there corresponding
+relations such as
+A1.Updating Physical Charectoristics velocity direction etc
+A2.collition detection  btw objects and making reactions via object behavior
+3. Creates actions sequence to be performed by the Gl Engine At A given time

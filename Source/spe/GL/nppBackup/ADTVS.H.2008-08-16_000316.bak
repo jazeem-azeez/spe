@@ -1,0 +1,876 @@
+//# include <c:\spe\GL\button.h>
+//# include <c:\spe\GL\mssgebox.h>
+//# include <c:\spe\GL\shadle.cpp>
+//# include <c:\spe\lib\vector.cpp>
+//# include <gui.h>
+
+# define NORMAL    0
+# define EXTENDED  1
+
+
+#define NOKEY	 0
+//key values defined has a sum up of 256
+#define UPKEY      328
+#define DOWNKEY    336
+#define LEFTKEY    331
+#define RIGHTKEY   333
+#define UPAGE      329
+#define DPAGE      337
+#define INS        338
+#define DEL        339
+#define HOME       327
+#define END        335
+#define ESC        27
+#define ENTER      13
+#define BACKSPACE  8
+#define SPACEBAR   32
+#define F1         315
+#define F2         316
+#define F3         317
+#define F4         318
+#define F5         319
+#define F6         320
+#define F7         321
+#define F8         322
+#define F9         323
+#define F10        324
+#define ALT_F      289
+#define ALT_E      274
+#define ALT_R      275
+#define ALT_C      302
+#define ALT_X      301
+#define ALT_H      291
+#define ALT_N      305
+# define CTRL_RIGHT 371
+# define CTRL_LEFT  372
+
+# define NO 0
+# define YES 1
+# define NONE -1
+# define MAX_MENU 20
+
+#define initialize_loop		for(;;){
+#define close_loop			if(loop_flag==BREAK)break;}
+#define break_loop			break;
+
+
+short timex=620,timey=580;
+
+#define showtime wait(),digitaltime(timex,timey)
+
+int ldsx=0,ldsy=0,ldex=0,ldey=0,steps=0;
+float ldstep,ldbarsize;
+int loop_flag=0  ;
+
+
+//char byte;
+//int gdriver = DETECT, gmode, errorcode;
+int maxx = 0, maxy = 0,COLOR=BLACK,logstatus=0;
+char msg[80];
+int movedx,movedy;
+int letw,leth;
+int visualpage,activepage,pagelimit;
+int setsvgamode;
+ struct dostime_t t;
+
+
+
+void ldbar_perc()
+{
+char str[50];
+char c=getcolor();
+setcolor(WHITE);
+settextjustify(LEFT_TEXT,BOTTOM_TEXT);
+settextstyle(0, HORIZ_DIR,1);
+sprintf(str, "Loading... %.2f %",(ldbarsize/(ldex-ldsx)*100));
+setfillstyle(SOLID_FILL,BLACK);
+bar(ldsx,ldsy-textheight(str),ldsx+textwidth(str),ldsy) ;
+outtextxy(ldsx,ldsy-1,str);
+setcolor(c);
+}
+
+
+int ldbar(int xtnd)
+{
+ldbarsize+=ldstep;
+if((ldbarsize+ldsx)>ldex)
+return 1;
+//printf("\n%f ,%f",ldstep,ldbarsize);
+rectangle(ldsx,ldsy,ldex,ldey);
+if(xtnd==0)
+{
+setcolor(WHITE);
+setfillstyle(SOLID_FILL,WHITE);
+bar(ldsx,ldsy,ldex,ldey);
+}
+setfillstyle(SOLID_FILL,LIGHTBLUE);
+bar(ldsx+1,ldsy+1,ldsx+ldbarsize,ldey-1);
+return 0;
+}
+
+void setup_ldbar(int x,int y,int ex,int ey,int stps)
+{
+ldsx=x,ldsy=y,ldex=ex,ldey=ey,steps=stps   ;
+ldbarsize=1;
+ldstep=(float)(ldex-ldsx)/steps;
+ldbar(0);
+}
+/***************************< Digital Num. Finder >*************************/
+void digit_write(int left,int top,int NUM)
+{
+
+   switch(NUM)
+   {
+   case 1:
+	  line(left+11,top+2,left+11,top+9);
+	  line(left+11,top+11,left+11,top+18);
+	  break;
+   case 2:
+	   line(left,top,left+10,top);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left-1,top+11,left-1,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 3:
+	   line(left,top,left+10,top);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 4:
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left+11,top+11,left+11,top+18);
+	   break;
+   case 5:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 6:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left-1,top+11,left-1,top+18);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 7:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+11,top+11,left+11,top+18);
+	   break;
+   case 8:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left-1,top+11,left-1,top+18);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 9:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left+1,top+10,left+9,top+10);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   case 0:
+	   line(left,top,left+10,top);
+	   line(left-1,top+2,left-1,top+9);
+	   line(left+11,top+2,left+11,top+9);
+	   line(left-1,top+11,left-1,top+18);
+	   line(left+11,top+11,left+11,top+18);
+	   line(left,top+20,left+10,top+20);
+	   break;
+   }
+
+}
+void digital(int x,int y,int n)
+{
+int a,b,c,d;
+ if(n<10)
+ {
+ digit_write(x+1,y,0);
+ digit_write(x+16,y,n);
+ }
+
+ if(n<100 && n>9)
+ {
+  a=n/10;b=n%10;
+  digit_write(x+1,y,a);
+  digit_write(x+16,y,b);
+ }
+
+  if(n<1000 && n>99)
+ {
+  a=n/100;
+  b=n%10;
+  c=(n-((a*100)+b))/10;
+  digit_write(x+1,y,a);
+  digit_write(x+16,y,c);
+  digit_write(x+32,y,b);
+ }
+
+  if(n<10000 && n>999)
+ {
+  a=n/1000;
+  b=n%10;
+
+  c=(n-((a*1000)+b))/100;
+  d=(n-((a*1000)+b+c*100))/10;
+  digit_write(x,y,a);
+  digit_write(x+1,y,c);
+  digit_write(x+32,y,d);
+  digit_write(x+48,y,b);
+ }
+
+  if(n<20000 && n>=10000)
+ {
+  a=n/10000;
+  b=n%10;
+  c=(n-((a*10000)+b))/1000;
+  d=(n-((a*10000)+b+c*1000))/100;
+  int e=(n-((a*10000)+b+(c*1000)+(d*100)))/10;
+  digit_write(x,y,a);
+  digit_write(x+15,y,c);
+  digit_write(x+30,y,d);
+  digit_write(x+45,y,e);
+  digit_write(x+60,y,b);
+}
+}
+
+
+
+FILE *out;
+char datebuf[9];
+char timebuf[9];
+int logstatues;
+
+void log(char msg[])
+{
+_strtime(timebuf);
+    fputs("\nLog:->", out);
+    fputs(timebuf,out);
+    fputs("\n",out);
+    fputs(msg,out);
+    fputs("\n",out);
+}
+
+void shadowtxt(char Txt[],int TxtX,int TxtY,int TxtCol)
+{
+  setcolor(0);outtextxy(TxtX+1,TxtY+1,Txt);
+  setcolor(TxtCol);outtextxy(TxtX,TxtY,Txt);
+}
+
+void showlog()
+{
+rewind(out);
+while (!feof(out))
+cout<<fgetc(out);
+}
+
+int startlog()
+{
+_strdate(datebuf);
+_strtime(timebuf);
+if ((out = fopen("logfile.log", "wt"))
+    == NULL)
+{
+   fprintf(stderr, "Cannot open input file.\n");
+   return 1;
+}
+logstatus=0;
+//while (!feof(in))
+   log("Started");
+   return 0;
+}
+
+int closelog()
+{
+log("Closed");
+fclose(out);
+return 0;
+}
+
+void checkerrors(void)
+{
+   int errorcode;
+
+   /* read result of last graphics operation */
+   errorcode = graphresult();
+   if (errorcode != grOk)
+   {
+      printf("Graphics error: %s\n", grapherrormsg(errorcode));
+      printf("Press any key to halt:");
+      getch();
+      exit(1);
+   }
+}
+/*
+int fliptext(char word[64])
+
+    {
+    outtextxy(10, 1, word);
+    for(x=10; x < 4 * 8 * strlen(word) + 8; x++)
+
+
+		{
+		for(y=0; y<30; y++)
+
+
+			{
+			col = getpixel(x, y);
+			if(col > 0)
+
+
+					{
+					putpixel(x, 60 - y, 3);
+					}
+				}
+			}
+			getch();
+	    }
+*/
+byte page=0;
+
+void pageflip()
+{
+setvisualpage(page);
+setactivepage(1-page);
+page=1-page;
+}
+/*A Simple Funtion to load Bitmap*/
+
+void Xldbmp(int x,int y ,char * file_name)
+	{
+		HideMouse();
+		X.put_BMP(x,y,file_name);
+		ShowMouse();
+		/*
+			 */
+       //	setrgbpalette(pal->colors[7] ,192,192,192);
+       //	setrgbpalette(pal->colors[8] ,128,128,128);
+      //	setrgbpalette(pal->colors[0],0,0,0);
+      //	setrgbpalette(pal->colors[15] ,255,255,255);
+
+	}
+
+int display_icon(int &sx,int &sy,char details[16])
+{
+	ldbmp(sx,sy,"icon.bmp");
+	outtextxy(sx,sy+70,details);
+	sx+=80;
+	if(sx>=maxx)
+	{sy+80;
+	sx=60;
+	}
+	moveto(sx,sy);
+	return 0;
+}
+
+void Dim(char c,char s)
+{
+	char i;
+	switch(s)
+	{
+		case 1 :for(i=60;i>0;i--)
+			{
+			setrgbpalette(c,i,0,0);
+			delay(15);
+			}
+			break;
+		case 2 :for(i=60;i>0;i--)
+			{
+			setrgbpalette(c,0,i,0);
+			delay(15);
+			}
+			break;
+		case 3 :for(i=60;i>0;i--)
+			{
+			setrgbpalette(c,0,0,i);
+			delay(15);
+			}
+			break;
+	}
+}
+
+void Bright(char c,char s)
+{
+	char i;
+	switch(s)
+	{
+		case 1 :for(i=0;i<60;i++)
+			{
+			setrgbpalette(c,i,0,0);
+			delay(15);
+			}
+			break;
+		case 2 :for(i=0;i<60;i++)
+			{
+			setrgbpalette(c,0,i,0);
+			delay(15);
+			}
+			break;
+		case 3 :for(i=0;i<60;i++)
+			{
+			setrgbpalette(c,0,0,i);
+			delay(15);
+			}
+			break;
+	}
+}
+
+void Enlarge(int x,int y,char c[])
+{       settextjustify(CENTER_TEXT, CENTER_TEXT);
+	int i;
+	setfillstyle(0,0);
+	for(i=1;i<10;i++)
+	{
+		settextstyle(4,0,i);
+		bar(x-(textwidth(c)),y-textheight(c),x+textwidth(c),y+textheight(c));
+		outtextxy(x,y-i,c);
+		delay(62);
+	}
+}
+
+void Reduce(int x,int y,char c[])
+{       settextjustify(CENTER_TEXT, CENTER_TEXT);
+	int i;
+	setfillstyle(0,0);
+	for(i=9;i>0;i--)
+	{
+		settextstyle(4,0,i);
+		outtextxy(x,y-i,c);
+		delay(62);
+		bar(x-(textwidth(c)),y-textheight(c),x+textwidth(c),y+textheight(c));
+
+	}
+}
+
+
+
+char * gin(int x,int y,char *finalstr)
+{
+   int midx, midy, ht,wt;
+   char byte;
+   char outstr[18];
+   midx = x;
+   midy = y;
+   ht = textheight ("W");
+   wt = textwidth  ("W");
+   xlen*=wt;
+   ylen*=ht;
+   setcolor(GREEN);
+   setbkcolor(BLACK);
+   setfillstyle(SOLID_FILL,WHITE);
+   settextstyle(0,0,0);
+   settextjustify(CENTER_TEXT, CENTER_TEXT);
+	setcolor(BLACK);
+	bar(midx-xlen,midy-(ht),midx+(wt*10),midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+
+   int i =-1;
+   for(finalstr[0]='\0';;)
+   {
+
+	byte=getch();
+	i++;
+	setcolor(BLACK);
+	bar(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	outstr[i]=byte;
+	outstr[i+1]='\0';
+	outtextxy(midx,midy,outstr);
+
+	if (byte==ENTER)   //Enter
+	{
+	finalstr[i]='\0';
+	break;
+	}
+	 if (byte==BACKSPACE)	//Backspace
+	{
+	i-=2;
+	setcolor(BLACK);
+	bar(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	outstr[i+1]='\0';
+	outtextxy(midx,midy,outstr);
+	continue;
+	}
+	finalstr[i]=byte;
+	if(i>xlen/wt)
+	{
+	finalstr[i]='\0';
+	break;
+	}
+}
+//   cleardevice();
+ return (&finalstr[0]);
+}
+
+char * boxin(int x,int y,int xlen, int ylen,char *finalstr)
+{
+   int midx, midy, ht,wt;
+   char byte;
+   char outstr[18];
+   midx = x;
+   midy = y;
+   ht = textheight ("W");
+   wt = textwidth  ("W");
+   xlen*=wt;
+   ylen*=ht;
+   setcolor(GREEN);
+   setbkcolor(BLACK);
+   setfillstyle(SOLID_FILL,WHITE);
+   settextstyle(0,0,0);
+   settextjustify(CENTER_TEXT, CENTER_TEXT);
+	setcolor(BLACK);
+	bar(midx-xlen,midy-(ht),midx+(wt*10),midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+
+   int i =-1;
+   for(finalstr[0]='\0';;)
+   {
+
+	byte=getch();
+	i++;
+	setcolor(BLACK);
+	bar(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	outstr[i]=byte;
+	outstr[i+1]='\0';
+	outtextxy(midx,midy,outstr);
+
+	if (byte==ENTER)   //Enter
+	{
+	finalstr[i]='\0';
+	break;
+	}
+	 if (byte==BACKSPACE)	//Backspace
+	{
+	i-=2;
+	setcolor(BLACK);
+	bar(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	setcolor(GREEN);
+	rectangle(midx-xlen,midy-ylen,midx+xlen,midy+ylen);
+	outstr[i+1]='\0';
+	outtextxy(midx,midy,outstr);
+	continue;
+	}
+	finalstr[i]=byte;
+	if(i>xlen/wt)
+	{
+	finalstr[i]='\0';
+	break;
+	}
+}
+//   cleardevice();
+ return (&finalstr[0]);
+}
+//   cleardevice();
+ return (&finalstr[0]);
+}
+
+int getpass(char  orginal_pass[18])
+{
+   /* request auto detection */
+   int midx, midy, ht,wt;
+   char byte;
+   char pass_str[32],outstr[32];
+
+   midx = getmaxx() / 2;
+   midy = getmaxy() / 2;
+       settextstyle(0,0,1);
+   /* get information about current text settings */
+
+   /* display the information */
+   ht = textheight ("W");
+   wt = textwidth  ("W");
+   /* clean up */
+   clearviewport();
+
+   //draws rectangle to enter the password
+   setcolor(GREEN);
+   setbkcolor(BLACK);
+   setfillstyle(SOLID_FILL,WHITE);
+   settextstyle(DEFAULT_FONT, HORIZ_DIR, 0);
+   settextjustify(CENTER_TEXT, CENTER_TEXT);
+
+	setcolor(BLACK);
+	bar(midx-(wt*10),midy-(ht),midx+(wt*10),midy+ht);
+	setcolor(GREEN);
+	rectangle(midx-(wt*10),midy-(ht),midx+(wt*10),midy+ht);
+
+   int i =-1,j=0;
+   for(pass_str[0]='\0';;)
+   {
+
+	byte=getch();
+	i++;
+	for(j=0;j<=i;j++)
+	outstr[j]='*';
+	outstr[j]='\0';
+	outtextxy(midx,midy,outstr);
+
+	if (byte==13)   //Enter
+	{
+	pass_str[i]='\0';
+	break;
+	}
+
+	if (byte==8)	//Backspace
+	{
+	i-=2;
+	if(i>=0)
+	{
+	setcolor(BLACK);
+	bar(midx-(wt*10),midy-(ht),midx+(wt*10),midy+ht);
+	setcolor(GREEN);
+	rectangle(midx-(wt*10),midy-(ht),midx+(wt*10),midy+ht);
+
+	for(j=0;j<=i;j++)
+	outstr[j]='*';
+	outstr[j]='\0';
+	outtextxy(midx,midy,outstr);
+	}
+	else
+	i=-1;
+	continue;
+	}
+	pass_str[i]=byte;
+}
+   cleardevice();
+   if(strcmp(pass_str,orginal_pass)==0)
+   {
+   Enlarge(400,200,"Access Permitted");
+   return 0;
+
+   }
+   else
+   {
+   Reduce(400,200,"Access denied");
+   getpass(orginal_pass);
+	}
+
+ return 1;
+}
+
+char *changefileext(char filename[16],char ext[6])
+{
+for(int i=0;filename[i]!='.'&&filename[i]!='\0';i++);
+i++;
+for(int j=0;ext[j]!='\0'&&j<6;j++,i++)
+filename[i]=ext[j];
+return &filename[0];
+}
+void set16bitpal()
+{
+		    setrgbpalette(pal->colors[0],0,0,0);
+		    setrgbpalette(pal->colors[1],0,0,128);
+		    setrgbpalette(pal->colors[2],0,128,0);
+		    setrgbpalette(pal->colors[3] ,0  ,128,128);
+		    setrgbpalette(pal->colors[4] ,128,000,000);
+		    setrgbpalette(pal->colors[5],128,000,128);
+		    setrgbpalette(pal->colors[6] ,128,128,000);
+		    setrgbpalette(pal->colors[7] ,192,192,192);
+		    setrgbpalette(pal->colors[8] ,128,128,128);
+		    setrgbpalette(pal->colors[9] ,000,000,225);
+		    setrgbpalette(pal->colors[10],000,225,000);
+		    setrgbpalette(pal->colors[11],000,225,225);
+		    setrgbpalette(pal->colors[12] ,255,000,000);
+		    setrgbpalette(pal->colors[13] ,255,000,255);
+		    setrgbpalette(pal->colors[14] ,255,255,000);
+		    setrgbpalette(pal->colors[15] ,255,255,255);
+}
+
+
+int ttime(int xcol,int ycol)
+ {
+  _dos_gettime(&t);
+  gotoxy(xcol,ycol);
+  printf("%2d: %02d: %02d.%02d\n", t.hour, t.minute,t.second, t.hsecond);
+  return 0;
+}
+int digitaltime(int x,int y)
+{
+	int col=getcolor();
+	setfillstyle(1,0);
+	bar(x,y,x+183,y+20);
+	setcolor(col);
+	rectangle(x,y-1,x+183,y+22);
+  _dos_gettime(&t);
+  digital(x+2,y, t.hour);
+  line(x+45,y+3,x+45,y+5);
+  line(x+45,y+15,x+45,y+18);
+  digital(x+51,y, t.minute);
+  line(x+95,y+3,x+95,y+5);
+  line(x+95,y+15,x+95,y+18);
+  digital(x+101,y, t.second);
+  line(x+145,y+3,x+145,y+5);
+  line(x+145,y+15,x+145,y+18);
+  digital(x+151,y, t.hsecond);
+  return 0;
+
+}
+
+int sysinfo(void)
+{
+
+   printf("\nPlease wait - getting  additional informations...");
+   char str[1024];
+   int i = 0,j=0;
+   while (environ[i])
+       {
+       printf("\n");
+       j=0;
+       strcpy(str,environ[i]);
+       while(str[j]!='\0')
+       {
+       printf("%c",str[j++]);
+	if(str[j-1]==';')
+       printf("\n");
+       else if(str[j-1]=='=')
+       printf(" ");
+       else
+       delay(31);
+//       showtime;
+       }
+       i++;
+       delay(62);
+       }
+
+   return 0;
+}
+int Show_files(char str[16])
+{
+  struct find_t ffblk;
+  int done;
+  done = _dos_findfirst(str,_A_NORMAL,&ffblk);
+  while (!done) {
+  if(!kbhit())
+    {
+    printf("\nFilename_>%s\n\t\t\tSize = %ld -bytes,\tdate stamp  = %o -> %o\n",ffblk.name,ffblk.size,ffblk.wr_date,ffblk.wr_time);
+    delay(500);
+    done = _dos_findnext(&ffblk);
+    }
+    else
+    {
+    getch();
+    printf("Press any key to continue");
+    getch();
+    }
+  }
+  return 0;
+}
+
+int crossline(int x,int y)
+{
+	line (x,0,x,600);
+	line (0,y,800,y);
+	return 0;
+}
+
+void explode_rectangle(int x,int y,int x1,int y1)
+{       int lx=(x1-x)/2;
+	int ly=(y1-y)/2;
+	for(int i=0;i<40;x-=2,y-=2,x1+=2,y1+=2,i++)
+	{
+	line(x,y,x+lx,y);
+	line(x,y,x,y+ly);
+	line(x1,y,x1-lx,y);
+	line(x1,y,x1,y+ly);
+	line(x,y1,x+lx,y1);
+	line(x,y1,x,y1-ly);
+	line(x1,y1,x1-lx,y1);
+	line(x1,y1,x1,y1-ly);
+	wait();
+	line(x,y,x+lx,y);
+	line(x,y,x,y+ly);
+	line(x1,y,x1-lx,y);
+	line(x1,y,x1,y+ly);
+	line(x,y1,x+lx,y1);
+	line(x,y1,x,y1-ly);
+	line(x1,y1,x1-lx,y1);
+	line(x1,y1,x1,y1-ly);
+	}
+}
+
+void LOCKON_rectangle(int x,int y)
+{       int x1=x+80,y1=y+80;
+	x-=80,y-=80;
+	int lx=(x1-x)/16;
+	int ly=(y1-y)/16;
+	for(int i=0;i<30;x+=2,y+=2,x1-=2,y1-=2,i++)
+	{
+	line(x,y,x+lx,y);
+	line(x,y,x,y+ly);
+	line(x1,y,x1-lx,y);
+	line(x1,y,x1,y+ly);
+	line(x,y1,x+lx,y1);
+	line(x,y1,x,y1-ly);
+	line(x1,y1,x1-lx,y1);
+	line(x1,y1,x1,y1-ly);
+	wait();
+	line(x,y,x+lx,y);
+	line(x,y,x,y+ly);
+	line(x1,y,x1-lx,y);
+	line(x1,y,x1,y+ly);
+	line(x,y1,x+lx,y1);
+	line(x,y1,x,y1-ly);
+	line(x1,y1,x1-lx,y1);
+	line(x1,y1,x1,y1-ly);
+	}
+}
+int screen_target_select(int &x,int &y)
+{
+	HideMouse();
+	setwritemode(XOR_PUT);
+
+	for(x=_x,y=_y;!kbhit()&&(_b!=clickbtn);x=_x,y=_y)
+	{
+		crossline(x,y);
+		rectangle(x-15,y-15,x+15,y+15);
+		delay(31);
+		wait();
+		crossline(x,y);
+		rectangle(x-15,y-15,x+15,y+15);
+	}
+	crossline(x,y);
+	explode_rectangle(x-15,y-15,x+15,y+15);
+	LOCKON_rectangle(x,y);
+	if(kbhit())
+	 {ShowMouse();
+		return -1;
+	 }
+	 ShowMouse();
+
+
+	return 1;
+
+}
+
+int screen_area_select(int &x,int &y,int &x1,int &y1)
+{
+screen_target_select(x,y);
+screen_target_select(x1,y1);
+bar(x,y,x1,y1);
+
+	return 1;
+
+}
+# include <c:\spe\GL\bcm.h> // bitmap console manager
+# include <c:\spe\gl\fractals.cpp>

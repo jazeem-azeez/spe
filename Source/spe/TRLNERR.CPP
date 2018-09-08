@@ -1,0 +1,20 @@
+#include <headerli.cpp>
+
+int main()
+{
+
+	initsvga();
+	InitMouse();
+	ShowMouse();
+	setup_float_exception();
+	SetMode(_800x600,1);
+	FLOAT_EXCEPTION
+	{
+
+	}
+	getch();
+	textmode(0x03);
+	closegraph();
+	printf("Thank you");
+	return 1;
+	}

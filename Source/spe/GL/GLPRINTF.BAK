@@ -1,0 +1,29 @@
+
+#include <stdio.h>
+#include <conio.h>
+#include <stdarg.h>
+
+char buffer[80];
+
+int glprintf(char *fmt, ...)
+{
+   va_list argptr;
+   int cnt;
+
+   va_start(argptr, fmt);
+   cnt = vsprintf(buffer, fmt, argptr);
+   va_end(argptr);
+   outtext(buffer);
+   return(cnt);
+}
+
+int main(void)
+{
+   int inumber = 30;
+   float fnumber = 90.0;
+   char string[4] = "abc";
+
+   glprintf("%d %f %s", inumber, fnumber, string);
+   printf("%s\n", buffer);
+   return 0;
+}

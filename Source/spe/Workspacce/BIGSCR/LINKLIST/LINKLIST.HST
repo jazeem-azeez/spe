@@ -1,0 +1,45 @@
+///////////////////////////////////////////////////////
+//                                                   //
+//   Linked List Class Functions - Version 2.00      //
+//                                                   //
+//          By Kevin Campbell 18/12/96               //
+//                                                   //
+//                                                   //
+///////////////////////////////////////////////////////
+
+/*
+
+	History :-
+
+		V2.00 - 18/12/96 (Released on GameDev and Deimos web-site)
+		Provided improved documentation.
+
+		V1.24 - 1/12/96 (Released on GameDev and Deimos web-site)
+		Changed all pointers in library so that they
+		are no longer explicitly far, thus allowing
+		the library to work more effectivly in small
+		data models.
+
+		V1.23 - 25/10/96
+		Fixed Major bug in find(), find was assigning
+		data, rather than comparing it.
+		Fixed large Bug's in cutfront/end where entry/
+		curr_entry were not being updated.
+		Added in count() function to restore lists
+
+		V1.22 - 18/10/96
+		Fixed major bug in last() and next() functions
+		  = curr_entry was not changed when using these
+
+		V1.21 - 15/10/96 (Unreleased)
+		Added find() function for use in ORM
+
+		V1.20 - 5/9/96  (Unreleased)
+		Added Link and cut functions for use in ORM
+		Added in use() function.
+
+		V1.10 -         (Unreleased)
+		Added Operator functions
+
+		V1.00 - 22/7/95 (Released on Gamedev)
+		Basic library

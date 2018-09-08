@@ -1,0 +1,2486 @@
+
+****************************** GRAPHICS *************************************
+
+ASM32 Graphics (C) Copyright 1993 - 1995 Douglas Herr þ All rights reserved
+
+ASM32 recognizes and automatically supports several graphics modes,
+including several which are not recognized by IBM's BIOS.  You should
+assume that all ASM32 graphics subroutines write directly to the video
+hardware.
+
+Locations on Graphics screens are defined by coordinate pairs such as (x,y).
+X-coordinates are the horizontal dimensions of the screen, and Y-coordinates
+are the vertical coordinates.  X = 0 is the at the left edge of the screen,
+and X = 719 is the right edge of a Hercules screen, while Y = 0 is the top
+edge of the screen and Y = 347 is the bottom (Hercules).  Thus, the
+coordinate specified by (719,0) is the extreme upper right corner of a
+Hercules screen.
+
+Graphics subroutines as powerful and flexible as ASM32's can be quite
+large.  If you have licenced ASM32 source code, you can use several
+pre-defined conditional assembly directives to eliminate code from
+ASM32 object files if you do not want or need to support all graphics
+modes:
+
+        NOHERC      eliminates all Hercules and InColor code
+        NOINCOLOR   eliminates code for the InColor card
+               (InColor works with Hercules monochrome code in 2 colors)
+        NO256       eliminates code for 256-color modes
+        NOCGA       eliminates code for CGA graphics modes
+        EGA         assembles only instructions for the EGA/VGA-type
+                    16-color modes or better.
+
+If you want to support only 16-color EGA/VGA-type modes, or better, you may
+also use the EGA32CW.LIB or EGA32DP.LIB library to eliminate much of the code
+and data required for monochrome, InColor, and CGA modes.  The EGA32 
+libraries
+can eliminate several thousand bytes from your executable files.
+
+Example:
+
+(CauseWay)
+WL32 mycode+startcw,,,EGA32CW+ASM32CW
+
+(DPMI, MS-LINK)
+LINK startdp+mycode,,,EGA32DP+ASM32DP
+
+(DPMI, TLINK)
+TLINK /3 startdp+mycode,,,EGA32DP+ASM32DP
+
+When using the EGA32 library, EGA32 must appear before ASM32 on the
+command line so that the linker uses the subroutines in EGA32 instead of
+the general subroutines in ASM32.
+
+EGA32 libraries are provided with standard ASM32 registration.
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+Graphics modes and pages supported are:
+
+Mode           Maximum x   Maximum y   Colors  Pages (1)  Equipment
+                ("xmax")    ("ymax")
+
+HGraph           719          347       2         0, 1    HGC, HGC+ (2)
+HGraph           719          347      16         0, 1    InColor  (2)
+04h, 05h         319          199       4         0       CGA, EGA, MCGA, VGA
+06h              639          199       2         0       CGA, EGA, MCGA, VGA
+0Dh              319          199       16        0 - 7   EGA, VGA  (3)
+0Eh              639          199       16        0 - 3   EGA, VGA  (3)
+0Fh              639          349       4         0       EGA, VGA  (4)
+10h              639          349       16        0, 1    EGA, VGA  (3,5)
+11h              639          479       2         0       MCGA, VGA, SVGA
+12h              639          479       16        0       VGA, SVGA
+13h              319          199       256       0       MCGA, VGA, SVGA
+40h              639          399       2         0       ATT 6300
+6Ah              799          599       16        0       VESA  (6)
+XMode16      up to 799     up to 599    16        0       Super EGA/VGA
+VGA13X      319 or 359    199 to 479    256       (7)     VGA
+SVGA16      799 or 1023   599 or 767    16        (10)    Super VGA (8)
+SVGA256     639 to 1023   399 to 767    256       (10)    Super VGA (8)
+GScreen (9)    no hardware limit        256       0       MCGA, VGA, SVGA
+SVGA32k     319 to 1280   199 to 1024   32k       (10)    Super VGA (8)
+
+(1)  page numbering begins with page 0.  Several modes have sufficient
+     memory available for additional page(s).
+(2)  page 1 available after calling Use64k
+(3)  EGA pages assumes 256k EGA memory
+(4)  monochrome monitor only
+(5)  EGA with 128k or more memory
+(6)  VESA mode 6Ah is supported by many Super VGA cards with multi-frequency
+     monitors
+(7)  VGA13X pages available range from 0 to 3.  See VGA13X in MODE.DOC.
+(8)  requires VGAKIT-compatible Super VGA and multi-frequency monitor.  See
+     SVGA16 and SVGA256 in MODE.DOC.
+(9)  a GScreen video buffer may be any dimension you want, as long as you
+     can allocate the memory required from RAM.  See UseGScreen.  MCGA is
+     minimum hardware required to display the image.  Only one page per
+     GScreen, but multiple GScreens may be allocated at any time.
+(10) SVGA modes allow multiple pages if a VESA BIOS is installed.
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+$SetFontData:  change character set used by ASM32's GPRINT subroutines
+Source:        fontdata.asm
+
+Call with:     EBX = character set index
+                 0 = use standard 8x8 characters
+                 1 = use standard 8x14 characters
+                 2 = user-suplied character font:
+                     FS:EAX = far address of character font data
+                     DH = bytes from one character's data to the next
+                     DL = byte size of each character (must be <= DH)
+
+Returns:       nothing
+Uses:          EBX
+Example:       see GPRINT
+
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BB16MASK:      create reverse mask from 16-color bitblock
+Source:        bb16mask.asm ($graph.asm)
+
+Call with:     ES:[EDI] pointing to 2- or 16-color bitblock
+
+               BB16MASK is handy for situations where you have an image
+               stored as a bitblock that contains blank areas that are not
+               part of the image, and you want to overlay the image on a
+               pre-existing screen image.  BB16MASK creates a reverse-image
+               mask that you may use to clear a space in the pre-existing
+               screen image in order to put the bitblock on the screen.
+               The effect is similar to using drawmode 2 with 256-color
+               bitblocks.  PutBitBlock with 16-color modes does not
+               support drawmode 2.  See example.
+
+Returns:       if CF = 0, ES:[EDI] points to new reverse-mask bitblock
+               if CF = 1, a memory allocation error was encountered
+Uses:          ES, EDI, flags
+Supports:      2-color and 16-color bitblocks, and EGA mode 0Fh 4-color
+               bitblocks.
+See also:      GetBitBlock, PutBitBlock
+
+Example on next page
+ 
+Example:
+
+; I have an image of Peter Pan that I want to show flying across a
+; a background image.
+
+; assume that the background image is in place
+
+extrn   putbitblock:proc
+extrn   bb16mask:proc
+
+include dataseg.inc
+extrn   drawmode:byte
+PeterPan    dw ?               ; segment address of Peter Pan image
+                               ; actual address filled in by the program
+PPMask      dw ?               ; storage area for inverse mask
+peterpan_xy dw ?,?             ; coordinates to put Peter Pan
+                               ; filled in by program
+
+include codeseg.inc
+; program fragment assumes 16-color graphics mode
+        .
+        .
+        .
+        mov     es,PeterPan
+        xor     edi,edi        ; ES:[EDI] points to Peter Pan bitblock
+        call    bb16mask       ; returns ES:[EDI] pointing to mask bitblock
+        jc      cant_do_it     ;  do error control
+        mov     PPMask,es      ; save mask address - DI is always zero
+        .
+        .
+        .
+; some time later...
+;
+; make space for PeterPan bitblock
+;
+        mov     drawmode,4     ; AND mode
+        lea     ebx,peterpan_xy
+        mov     es,PPMask
+        xor     edi,edi        ; ES:[EDI] points to mask image
+        call    putbitblock    ; clear a space for Peter Pan
+
+        mov     drawmode,3     ; OR the Peter Pan image into cleared space
+        mov     es,PeterPan
+        xor     edi,edi
+        call    putbitblock
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BB16REV:       reverses a 2-color or 16-color bitblock saved by GetBitBlock
+
+Source:        bb16rev.asm
+
+Call with:     [EDI] = near pointier to bit block
+
+               BB16REV reverses the image left-to-right in any 2-color
+               or 16-color bitblock saved by GetBitBlock.
+               Also works with EGA monochrome (mode 0Fh) bitblocks.
+               Assumes that the system is in the graphics mode used to
+               create the bitblock.
+
+Returns:       nothing
+Uses:          flags
+Supports:      all ASM32 2-color, 16-color and EGA monochrome bit blocks
+See also:      GetBitBlock, PutBitBlock
+Example:       See example for BB256REV.
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BB256OVL:      overlay one 256-color bitblock on another
+Source:        bb256ovl.asm
+
+Supports:      256-color bitblocks created with ASM32's GetBitBlock.  You
+               may also use 256-color screen image data created by ASM32's
+               GetGScreen.
+               256-color modes are mode 13h, VGA13x and SVGA256.
+
+Call with:     DS:[ESI] pointing to source bitblock
+               ES:[EDI] pointing to destination bitblock
+               AX = signed x-offset of source in destination
+               BX = signed y-offset of source in destination
+
+               Non-zero pixels in the source bitblock is copied to the
+               destination bitblock.  Source and destination bitblocks
+               need not be the same size.  If x-width of source plus x-
+               offset is greater than x-width of destination, the source
+               will be clipped at the right edge of the destination bitblock.
+               Similarly, if the y-height of the source bitblock plus the y-
+               offset is greater than the y-height of the destination, the
+               source is clipped at the bottom of the destination bitblock.
+               X- and y-offsets may be negative; if so, the left or top of
+               the source is clipped at the left or top of the destination.
+               If both x-offset and y-offset are zero, the upper-left
+               corner of the source is overlayed on the upper-left corner
+               of the destination bitblock.  In all cases the source
+               is not changed.
+
+               This subroutine is handy for some animation techniques.  In
+               this case, a background bitblock and one or more foreground
+               object bitblocks are developed; a copy of the background is
+               made, and is used as the destination bitblock; then, the
+               various foreground bitblocks are added to the background at
+               whatever location in the background is required by the
+               program; finally, the destination bitblock is moved to the
+               screen either by ASM32's PutBitBlock or PutGScreen subroutine.
+               This keeps most of the bitblock operations in the computer's
+               fastest memory and requires only one access to slower video 
+RAM.
+
+BB256OVL example begins on next page
+ 
+
+BB256OVL Example:
+
+; I want to show the view from a train on the Alaska Railroad.  I'll use
+; bitblocks for Sky, Sun, Mountains, far trees, meadows, and near trees.
+; This example shows how you would build one image.  To create the illusion
+; of motion, the program would move the near trees faster than the meadow,
+; which is moving faster than the far trees, which are moving faster than
+; the mountains.  Changing the x-offset of each foreground bitblock moves
+; that object against the background.
+
+; uninitialized data in example code is filled in by program before this
+; code executes
+
+include dataseg.inc
+
+extrn   drawmode:byte
+xandy   dw ?,?
+;
+; all bitblocks are in near memory
+;
+sky             dd ?            ; near address of background
+skysize         dd ?            ; size of background bitblock < 64k
+skycopy         dd ?            ; working buffer for building complete image
+
+mtns            dd ?            ; near address of mountains bitblock
+mtns_offset     dw ?,?          ; offset of mountains in background
+
+fartrees        dd ?            ; near address of far trees
+fartree_offset  dw ?,?          ; offset of far trees in background
+
+meadow          dd ?            ; near address of meadow
+meadow_offset   dw ?,?          ; offset of meadow in background
+
+neartrees       dd ?            ; near address of near trees
+neartree_offset dw ?,?          ; offset of near trees in background
+
+include codeseg.inc
+; program fragment assumes 256-color graphics mode
+        .
+        .
+;
+; start building image by making blank copy of background
+;
+        mov     edi,skycopy     ; ES:[EDI] points to working buffer
+        mov     ecx,skysize
+        mov     esi,sky
+        cld
+        rep     movsb           ; copy sky bitblock to working buffer
+
+; Example continues on next page
+ 
+
+; BB256OVL example, continued
+
+        mov     edi,skycopy     ; ES:[EDI] points to working background
+
+;
+; add foreground objects to sky
+;
+        lea     esi,mtns
+        mov     ecx,4           ; 4 foreground bitblocks
+
+next_foreground:
+        push    esi
+
+        mov     ax,4[esi]       ; get x-offset
+        mov     bx,6[esi]       ; get y-offset
+        mov     esi,[esi]
+        call    bb256ovl        ; overlay this bitblock on previous image
+        pop     esi             ; get back ptr to bitblock data
+        add     esi,8           ; point to next bitblock data
+        loop    next_foreground ; do for all bitblocks
+
+;
+; built-up image is complete
+; copy to screen
+;
+        mov     drawmode,1      ; I want new image to wipe out old
+        lea     ebx,xandy       ; x & y screen address
+                                ; ES:[EDI] still points to working bitblock
+        call    putbitblock     ; put bitblock on screen
+;
+; change bitblock offsets to illustrate motion and display next image
+;
+        .
+        .
+        .
+        jmp     next_foreground
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BB256REV:      reverses a 256-color bitblock saved by GetBitBlock
+Source:        bb256rev.asm
+
+Call with:     [EDI] = near pointer to bit block
+
+               BB256REV reverses the image left-to-right in any 256-color
+               bitblock saved by GetBitBlock.
+
+Returns:       nothing
+Uses:          flags
+Supports:      all ASM32 256-color bit blocks
+See also:      GetBitBlock, PutBitBlock
+
+Example on next page
+ 
+
+BB256REV Example:
+
+; code fragment assumes e 256-color graphics mode
+
+include model.inc
+
+extrn   bitblockbytes:near, getbitblock:near, putbitblock:near
+extrn   bb256rev:near
+
+include dataseg.inc
+ptr     dd ?                ; use this to save pointer to bit block
+x0      dw 100,43,175,143   ; save from (100,43) to (175,143)
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        lea   ebx,x0        ; point to block corners
+        call  bitblockbytes ; calculate byte requirement
+        jc    too_big       ; error control
+        mov   ebx,eax
+        sys   GetMemNear
+        jc    no_memory     ; more error control
+        mov   ptr,esi       ; save near address of bit block
+        mov   edi,esi       ; EDI points to buffer
+        lea   ebx,x0        ; EBX points to coordinate data
+        call  getbitblock
+        .
+        .
+
+; later . . .
+; reverse the image & put back on screen
+        lea   ebx,x0        ; put the bit block back where you found it
+        mov   edi,ptr       ; DS:[EDI] points to buffer
+        call  bb256rev      ; reverse the image
+        call  putbitblock
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BB32kREV:      reverses a 32k-color bitblock saved by GetBitBlock
+Source:        bb32krev.asm
+
+Call with:     [EDI] = near pointer to bit block
+
+               BB32kREV reverses the image left-to-right in any 32k-color
+               bitblock saved by GetBitBlock.
+
+Returns:       nothing
+Uses:          flags
+Supports:      all ASM32 32k-color bit blocks
+See also:      GetBitBlock, PutBitBlock
+
+Example:       See BB256REV
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BEZIER:        draw a Bezier curve on the screen
+Source:        bezier.asm (drawline.asm)
+
+80x87 or emulator required
+
+Call with:     EBX pointing to curve coordinate data
+               ECX = number of points on curve (ECX > 0)
+                a larger number of points on the curve will result in
+                slower operation and a smoother curve.  In many cases
+                ECX > 50 will not improve the appearance of the curve.
+
+                Four coordinates are required: two curve endpoints and
+                two control points.  The curve endpoints (x0, y0) and
+                (x3, y3) are similar to DrawLine's coordinates; if you
+                call bezier with ECX = 1, you will see only a straight
+                line between the endpoints.  The "control points" act
+                like magnets, pulling the curve away from a straight line.
+                At each endpoint, the curve is tangent to a line drawn
+                between the endpoint and the adjacent control point
+                ("adjacent" control point meaning adjacent in the data
+                structure).
+
+Returns:       nothing
+Uses:          all 80x87 registers
+Supports:      all ASM32 graphics modes; drawmode 0 not recommended
+Example:
+
+include codeseg.inc
+
+extrn   bezier:near
+
+; data
+extrn   drawmode:byte
+bz      dw 50,50            ; first endpoint:       (x0, y0)
+        dw 100,0            ; first control point:  (x1, y1)
+        dw 200,0            ; second control point: (x2, y2)
+        dw 250,175          ; second endpoint:      (x3, y3)
+                            ; note that both control points in this
+                            ; example pull the curve toward the top of the
+                            ; screen
+
+; code
+; program fragment assumes 80x87 is installed
+; and that the screen is in graphics mode
+        .
+        .
+        mov     drawmode,1  ; use foreground color
+        lea     ebx,bz      ; point to bezier curve data
+        mov     ecx,100     ; should be adequate
+        call    bezier
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BITBLOCKBYTES: calculate bytes required to save a bit block
+Source:        bbbytes.asm ($graph.asm)
+
+Call with:     EBX pointing to x- and y-coordinate data (see example)
+Returns:       EAX = bytes required to save the bit block
+Uses:          EAX, flags
+Supports:      all ASM32 graphics modes; call BitBlockBytes while
+               the system is in the mode you intend to use.  Otherwise,
+               an incorrect byte size may be returned, leading to either
+               wasted memory or memory allocation errors.
+Example:
+
+include codeseg.inc
+
+extrn   bitblockbytes:near
+
+; data
+x0      dw 100,43         ; first corner at (100,43)
+x1      dw 175,143        ; second corner at (175,143)
+
+; code
+        .
+        .
+        .
+        lea    ebx,x0          ; EBX points to bit block corner data
+        call   bitblockbytes   ; returns EAX = byte size of buffer required
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BITPLANEBYTES: calculate bytes to save one plane of a bit block
+               alternate entry to BitBlockBytes; calculates bytes
+               required to save one plane of multi-plane modes
+Source:        bbbytes.asm ($graph.asm)
+Call with:     EBX pointing to x- and y-coordinate data
+Returns:       EAX = bytes required to save the bit plane
+Uses:          EAX, flags
+Supports:      all ASM32 graphics modes; call BitPlaneBytes while
+               the system is in the mode you intend to use.  If the
+               system is is not in a multi-plane mode, BitPlaneBytes
+               will give you the same results as BitBlockBytes.
+               Graphics modes with multiple planes are mode 0Fh (2 planes)
+               and all 16-color modes (4 planes).
+Example:
+
+include codeseg.inc
+
+extrn   bitplanebytes:near
+
+; data
+x0      dw 100,43         ; first corner at (100,43)
+x1      dw 175,143        ; second corner at (175,143)
+
+; code
+        .
+        .
+        .
+        lea    ebx,x0          ; EBX points to bit block corner data
+        call   bitplanebytes   ; returns EAX = byte size of buffer required
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+BUFFERDIM:     change logical buffer dimensions
+               does not change number of pixels displayed on screen;
+               used with ScreenOrigin.
+Source:        buffdim.asm ($graph.asm)
+
+Call with:     EBX pointing to new buffer dimensions
+               Note that the logical buffer dimensions should be
+               greater than the dimensions displayed on the screen
+               The logical buffer dimensions must not create a plane size
+               greater than 64k; in 16-color modes, a logical pixel width
+               of 800 + logical height of 600 works out to 60,000 bytes per
+               plane.  In any of the 256-color VGA13x modes, an x-width of
+               640 and a y-dimension of 400 is 64,000 bytes per plane.
+
+               If anything is displayed on the screen before changing
+               logical dimensions, it will be unreadable after calling
+               BufferDim if your logical x-dimension is not the same as
+               the screen's physical x-width.
+
+               BufferDim does no error checking; you must determine if
+               the computer has an EGA or VGA (see GetCRT in SYSTEM.DOC)
+               and you must verify that the logical dimensions are greater
+               than the screen dimensions.
+
+               Using BufferDim disables ASM32's multiple graphics pages
+               capabilities.
+
+Returns:       nothing
+Uses:          nothing; all registers and flags are saved
+Supports:      EGA/VGA-type 16-color graphics modes
+               VGA13x 256-color modes
+               VESA SVGA modes
+Example:       see next page
+
+ 
+
+(BufferDim example)
+
+; The computer has a 256k EGA card & EGA-only monitor 
+; and I want to display an image that is 800 pixels wide
+; and 600 pixels high.
+; I'll use EGA mode 10h, switch to logical dimensions of 800x600,
+; put the image in the video buffer & use ScreenOrigin to view
+; various parts of the image
+
+include codeseg.inc
+
+public  mysub
+extrn   bufferdim:near, screenorigin:near
+extrn   loadpcx:near
+
+include model.inc
+
+include dataseg.inc
+
+dim     dw 800,600              ; I want 800 logical x
+                                ;  & 600 logical y
+xy      dw 0,0                  ; screen origin always starts at (0,0)
+fname   db '800x600.pcx',0      ; a .PCX file with an 800 x 600 image
+@curseg ends
+
+include codeseg.inc
+
+mysub   proc	near
+; set up 640x350 16-color mode
+        mov    ax,10h           ; use BIOS to set mode
+        int    10h
+        lea    ebx,dim          ; point to logical buffer dimensions
+        call   bufferdim        ; set up 800x600 logical dimensions
+                                ; NOTE: only one page available
+
+; program loads image to video buffer
+        lea    edx,fname        ; point to filename
+        call   loadpcx          ; get image
+
+; default screen origin: (0,0) of buffer is at (0,0) of screen
+; change portion of buffer displayed to logical (100,100)
+; at (0,0) of screen
+        lea    ebx,xy
+        mov    word ptr [ebx],100
+        mov    word ptr 2[ebx],100
+        call   screenorigin
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+CIRCLEASPECT:  modifies aspect ratio of circle
+Source:        $circle.asm ($graph.asm)
+
+Call with:     AH = numerator of aspect ratio
+               AL = denominator of aspect ratio
+               AH <> 0, AL <> 0
+
+               CircleAspect is used with DrawCircle to draw an ellipse.
+               An aspect ratio less than one makes a flat ellipse and an
+               aspect ratio greater than one makes a tall ellipse.
+
+Returns:       nothing
+Uses:          nothing; all registers and flags are saved
+Supports:      all ASM32 graphics modes
+Example:       see DrawCircle
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+COLOR32k:      calculate color attribute for SVGA 32k-color modes
+Source:        color32k.asm
+
+Call with:     EBX pointing to Red, Green and Blue color bytes
+               Red, Green and Blue may range from 0 to 63.  Color32k
+               combines these colors in a 15-bit color attribute for
+               32k-color graphics modes.
+Returns:       AX = color attribute
+Uses:          AX; high word of EAX is not changed
+Supports:      SVGA 32k-color graphics modes
+Example:
+
+; calculate color attributes for background and foreground for 32k-color
+; mode
+
+extrn   color32k:near, gcolor:near
+
+include dataseg.inc
+
+fore    db 32                ; medium red
+        db 0                 ; no green
+        db 63                ; saturated blue
+
+back    db 0                 ; no red
+        db 0                 ; no green
+        db 32                ; medium blue
+
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        .
+; calculate color attributes for foreground & background
+; then pass 'em to GCOLOR
+
+; do background first
+        lea     ebx,back
+        call    color32k     ; ret: AX = color attribute
+        shl     eax,16       ; put background color attribute in place
+
+; now do background
+        lea     ebx,fore
+        call    color32k     ; ret: AX = foreground color attribute
+        call    gcolor
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+DEFGMODE:      restore ASM32's internal flags to use system graphics mode
+               (see ForceGMode)
+Source:        defgmode.asm
+
+Call with:     no parameters
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:       see ForceGMode
+
+
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+DRAWCIRCLE:    draw a circle
+Source:        drawcirc.asm ($circle.asm, $graph.asm, $putdot.asm)
+
+Call with:     EBX pointing to circle center coordinates and x-radius
+               Drawmodes supported are:
+                4 = AND the foreground color with the screen
+                3 = OR the foreground color with the screen
+                1, 2 = use foreground color
+                0 = XOR circle with existing screen
+               -1, -2 = use background color
+               -3 = OR the background color with the screen
+               -4 = AND the background color with the screen
+               See DrawMode for more information
+               See also CircleAspect
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+See also:      FillCircle
+Example:
+
+include codeseg.inc
+
+extrn   drawcircle:near, circleaspect:near
+
+; data
+xcenter dw 100              ; DrawCircle data must be words
+ycenter dw 100              ; the circle is centered at (100,100)
+xradius dw 50               ; x-dimension radius in pixels (>0)
+
+; code
+        .
+        .
+        .
+        mov   ah,5
+        mov   al,1          ; a tall ellipse
+        call  circleaspect
+
+        lea   ebx,xcenter   ; EBX points to circle data
+        call  drawcircle    ; draw the circle
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+DRAWBOX:       draw a rectangle on a graphics screen
+Source:        drawbox.asm ($graph.asm, $vert.asm, $horiz.asm, several 
+others)
+
+Call with:     EBX pointing to box corner data
+               Drawmodes supported are:
+                4 = AND the foreground color with the screen; color modes
+                3 = OR the foreground color with the screen
+                1, 2 = use foreground color: all modes
+                0 = XOR foreground color with existing pixels
+               -1, -2 = use background color: all modes
+               -3 = OR the background color with the screen
+               -4 = AND the background color with the screen; color modes
+               See DrawMode for more information; see also LinePattern
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   drawbox:near
+
+; data
+x0      dw 25,10            ; first corner at (25,10); data is word size
+x1      dw 301,97           ; opposite corner at (301,97)
+
+; code
+        .
+        .
+        lea   ebx,x0         ; EBX points to box corner data
+        call  drawbox
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+DRAWLINE:      draw a line on a graphics screen
+Source:        drawline.asm ($graph.asm, $vert.asm, $horiz.asm,
+                             $slope.asm, many others)
+
+Call with:     EBX pointing to line endpoint data
+
+               Line endpoint data is word data in sets of two (x,y) pairs.
+               X and y may vary from -32768 to +32767; only the portion of
+               the line that lies with the active View will be displayed.
+               See GetView; also see Example.
+
+               Drawmodes supported are:
+                4 = AND the foreground color with the screen; color modes
+                3 = OR the foreground color with the screen
+                1, 2 = use foreground color: all modes
+                0 = XOR foreground color with existing pixels
+               -1, -2 = use background color: all modes
+               -3 = OR the background color with the screen
+               -4 = AND the background color with the screen; color modes
+               See DrawMode for more information; see also LinePattern
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+extrn   drawline:near
+
+include dataseg.inc
+x0      dw 25,10            ; first endpoint at (25,10); data is word size
+x1      dw 301,97           ; other end of line at (301,97)
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        lea   ebx,x0         ; [EBX] points to line coordinate data
+        call  drawline
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+DRAWMODE:      control ASM32 graphics drawing mode
+Source:        $graph.asm
+
+               DrawMode is a public byte used to control the operation
+               of many ASM32 subroutines.  ASM32's default drawmode is 1.
+
+               Typically, drawmodes have the following effects:
+                2 = use foreground color only; text is printed without
+                    background, foreground only of line patterns or
+                    fill patterns is used
+                1 = use foreground and background; text is printed with
+                    background, line patterns and fill patterns update
+                    both foreground and background
+                0 = foreground color is XORed with the existing screen
+                    (not supported in 256-color or CGA 4-color modes)
+               -1 = characters or fill pattern drawn with foreground
+                    and background reversed
+               -2 = character or line drawn with background color only
+
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+; data
+extrn   drawmode:byte
+
+; code
+        .
+        .
+        mov     drawmode,2      ; print text with foreground color only
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+FILLAREA:      fills an irregular area on a graphics screen
+Source:        fillarea.asm ($graph.asm, $horiz.asm, $getdot.asm,
+                             several others)
+
+Call with:     EBX pointing to seed pixel coordinates
+
+               Fills any irregularly-shaped area with color and/or
+               pattern, beginning at (x,y).  The area's boundary is
+               defined by a solid line of non-zero pixels.
+
+               If you use a FillPattern with FillArea, performance will be
+               degraded when using DrawMode 2, or DrawMode 1 with a black
+               (color 0) background.  FillArea assumes that all FillPatterns
+               are 8 bytes long.
+
+               FillArea is a recursive subroutine, and with highly convoluted
+               fill regions it uses considerable stack space.  FillArea
+               allocates a temporary 64k stack space for this recursive
+               process, but under extreme circumstances 64k may not be
+               adequate.  FillAreaStack, a public DWORD in FillArea's data
+               area, may be increased from the default 64k if nessesary.
+               FillArea needs a larger stack if the program jams or crashes
+               during a FillArea call.
+
+               DrawModes supported are:
+                2 = fill with foreground color only (if fill pattern
+                    has been defined): 16-color modes
+                1 = fill with foreground (and background, if fillpattern
+                    defined): all modes (FillPattern not supported in 256-
+                    color or 32k-color modes).
+               See also FillPattern.
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+extrn   fillarea:near
+
+include dataseg.inc
+extrn   fillareastack:dword
+x       dw 10,15         ; start fill operation at x=10, y=15
+@curseg ends
+
+include codeseg.inc
+
+        .
+        .
+        mov    fillareastack,100000
+        lea    ebx,x
+        call   fillarea
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+FILLBOX:       draw a filled rectangle on a graphics screen
+Source:        fillbox.asm ($graph.asm, $horiz.asm, several others)
+
+Call with:     EBX pointing to box corner data
+               Drawmodes supported are:
+                4 = AND the box with the pre-existing screen
+                3 = OR the foreground color with the screen
+                1, 2 = use foreground color
+                0 = XOR foreground color with existing pixels
+               -1, -2 = use background color
+               -3 = OR the background color with the screen
+               -4 = AND the background color with pre-existing screen
+               See DrawMode for more information; also see FillPattern.
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   fillbox:near
+
+; data
+x0      dw 25,10            ; first corner at (25,10); data is word size
+x1      dw 301,97           ; opposite corner at (301,97)
+
+; code
+        .
+        .
+        lea   ebx,x0         ; [EBX] points to box corner data
+        call  fillbox
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+FILLCIRCLE:    draw a filled circle
+Source:        fillcirc.asm ($circle.asm, $graph.asm, $horiz.asm)
+
+Call with:     EBX pointing to circle center coordinates and x-radius
+               Drawmodes supported are:
+                4 = AND the foreground color with the screen
+                3 = OR the foreground color with the screen
+                1, 2 = use foreground color
+                0 = XOR circle with existing screen
+               -1, -2 = use background color
+               -3 = OR the background color with the screen
+               -4 = AND the background color with the screen
+
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+See also:      DrawCircle, DrawMode, CircleAspect
+Example:
+
+include codeseg.inc
+
+extrn   fillcircle:near, circleaspect:near
+
+; data
+xcenter dw 100              ; fillcircle data must be words
+ycenter dw 100              ; the circle is centered at (100,100)
+xradius dw 50               ; x-dimension radius in pixels (>0)
+
+; code
+        .
+        .
+        .
+        mov   ah,5
+        mov   al,1          ; a tall ellipse
+        call  circleaspect
+
+        lea   ebx,xcenter   ; EBX points to circle data
+        call  fillcircle    ; draw the circle
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+FILLPATTERN:   define an optional pattern for FillArea & FillBox
+Source:        fpattern.asm
+
+Call with:     EBX pointing to ASCIIZ pattern string.
+               Up to 8 characters in the string will be used.
+               The pattern must be re-defined before each call to a line
+               drawing subroutine (FillArea, FillBox).  Note that FillArea
+               uses 8-byte fillpatterns; FillBox allows shorter
+               fillpattern strings.
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes except 256-color modes
+Example:
+
+include codeseg.inc
+
+extrn   fillbox:near
+extrn   fillpattern:near
+
+; data
+x0      dw 25,10            ; first corner at (25,10); data is word size
+x1      dw 301,97           ; opposite corner at (301,97)
+pattern db 8 dup(10101010b),0
+
+; code
+        .
+        .
+        lea   ebx,pattern   ; [EBX] points to pattern string
+        call  fillpattern   ; define the pattern
+        sub   ebx,8         ; [EBX] points to box corner data
+        call  fillbox       ; draw a patterned box
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+FORCEGMODE:    force ASM32 to use one particular graphics mode
+               this is handy for two-monitor systems
+Source:        defgmode.asm
+
+Call with:     AL = graphics mode to use
+               forcegmode does not change the actual screen mode; what
+               it does is to force ASM32's central graphics control
+               to ignore the system mode.  Call defgmode to restore
+               ASM32's internal flags to the default state.
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes (256-color modes not tested)
+Example:
+
+include model.inc
+
+extrn   modecolor:near, modemono:near
+extrn   forcegmode:near, gcolor:near, defgmode:near
+
+include dataseg.inc
+gtext   db 'Graphics mode',0
+gpos    dd 0                   ; 2 words of zeros to position text
+ttext   db 'Text mode',0
+@curseg ends
+
+include codeseg.inc
+        .
+; I want text on the monochrome screen and 16-color graphics on the EGA
+        call   modecolor       ; switch to color monitor
+        mov    ax,10h          ; set up graphics mode
+        int    10h
+        mov    al,10h          ; tell ASM32 to use mode 10h
+                               ; use AL = 13h for VGA 256-color modes
+                               ; use AL = 8 for Hercules (including InColor)
+        call   forcegmode      ; best to do this after the mode change
+        call   modemono        ; switch back to the monochrome monitor
+        mov    ax,010Ch        ; blue background, red foreground
+        call   gcolor
+        lea    esi,gtext       ; point to graphics message
+        lea    edx,gpos        ; positioned at upper left corner
+        call   gprint          ; prints on EGA in graphics mode
+
+        lea    esi,ttext       ; point to text message
+        xor    dx,dx           ; upper left corner of text screen
+        mov    ah,7            ; normal color
+        call   tprint          ; display message on monochrome monitor
+        .
+        .
+; sometime later, all done with this setup
+        call   defgmode        ; clear ASM32's internal graphics flags
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GBASEADDRESS:  change ASM32 graphics base address
+Source:        gbaseadr.asm ($graph.asm)
+
+Call with:     EAX = base address for alternate graphics buffer
+               if EAX = 0, default base segment is restored
+               GBaseAddress may be used to create and update off-screen
+               graph images, thus simulating multiple screen pages.
+Returns:       nothing
+Uses:          nothing
+Supports:      mode 04h, 05h, HGraph (monochrome only), 40h, 11h, 13h
+
+               buffer size requirements:
+
+                mode 04h, 05h    16384 bytes
+                HGraph, 40h      32768 bytes
+                mode 11h         38400 bytes
+                mode 13h         64000 bytes
+
+                You must call GBaseAddress AFTER switching the system to
+                graphics mode, or it will not work; you must also call
+                GBaseAddress with EAX = 0 before changing from one graphics
+                mode to another, or the default base address may get messed
+                up.
+Example:
+
+public myprog
+
+include codeseg.inc
+
+extrn  gbaseaddress:near, drawbox:near
+
+; data
+boxdata dw 0,0,319,199
+
+screen1 db 64000 dup (0)     ; second screen for mode 13h
+
+; code
+myprog proc
+; mode 13h, 320x200x256 colors
+       mov     ax,13h
+       int     10h
+
+; use alternate buffer
+       lea     eax,screen1
+       call    gbaseaddress
+       lea     ebx,boxdata
+       call    drawbox
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GCENTER:       centers a string on a graphics screen
+Source:        gcenter.asm (gprint.asm, $graph.asm, strlen.asm, f8x14.asm)
+
+GCENTERX:      centers a double-width string on a graphics screen
+Source:        gcenterx.asm (gprintx.asm, $graph.asm, strlen.asm, f8x14.asm)
+
+Call with:     ESI pointing to the string to print
+               EDX pointing to x- and y-coordinates
+               the x-coordinate is a placeholder; GCenter calculates the
+               correct x value before calling GPrint.
+
+               Colors, drawmodes and character sizes are the same as
+               for GPrint or GPrintX.
+Returns:       x = calculated x-coordinate
+Uses:          nothing; all registers and flags are saved.
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   gcenter:near
+
+; data
+x       dw ?
+y       dw 2               ; print graph title 2 pixels down from the top
+title   db 'Graph title',0
+
+; code
+        .
+        .
+        lea    esi,title    ; ESI points to string
+        lea    edx,x        ; point to coordinates
+        call   gcenter      ; print the string, centered horizontally
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GCLEAR:        clears the active portion of a graphics screen
+               uses background color
+Source:        gclear.asm ($graph.asm, $horiz.asm, others)
+
+Call with:     no parameters
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   gclear:near
+
+; code
+        .
+        .
+        .
+        call  gclear
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GCOLOR:        update color used by ASM32 graphics
+Source:        gcolor.asm ($graph.asm)
+
+Call with:     (most modes) AL = foreground color
+                            AH = background color
+               (SVGA32k)    AX = foreground color
+                            high word of EAX = background color
+
+               for 4-color modes, colors may be 0-3
+               for 16-color modes, colors may be 0-15
+               for 256-color modes, colors may be 0-255
+               for 32k-color modes, colors may be 0-32767 (see Color32k)
+
+Returns:       nothing
+Uses:          nothing
+Supports:      all color graphics modes and mode 0Fh
+               GColor is ignored by 2-color modes
+Example:
+
+include codeseg.inc
+
+extrn   gcolor:near
+
+; code
+        .
+        .
+        .
+        mov   ah,bcolor      ; background color
+        mov   al,fcolor      ; foreground color
+        call  gcolor
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GCOPY:         copies one page of graphics memory to another
+Source:        gcopy.asm ($graph.asm)
+
+Call with:     BH = frompage
+               BL = topage
+Returns:       CF = error flag
+                if CF = 0, no error
+                if CF = 1, bad page number or frompage = topage
+Uses:          CF
+Supports:      Hercules and InColor (with Use64k)
+               EGA/VGA modes 0Dh, 0Eh, 0Fh, 10h
+               VGA13X [0,1,2]
+               CauseWay extender ONLY
+Example:
+
+include codeseg.inc
+
+extrn   gcopy:near
+
+; code
+        .
+        .
+        .
+        mov   bx,0001h       ; copy from page 0 to page 1
+        call  gcopy
+        jc    bad_page       ; uh oh, pages not supported
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GCURSOR:       simulate text-mode cursor on graphics screen
+GUCURSOR:      simulate underscore cursor on graphics screen
+Source:        gcursor.asm ($graph.asm)
+
+Call with:     EDX pointing to x- and y-coordinate word data
+               x and y are the coordinates of the UPPER LEFT corner of
+               a character block.  Note that text characters are
+               8 x-pixels wide and from 8 to 16 y-pixels high.
+
+               GCursor and GUCursor maintain the simulated cursor while
+               the keyboard type-ahead buffer is empty.  GCursor shape
+               is an underscore when INSERT is off and a larger block
+               when INSERT is on.  GUCursor is an underscore regardless
+               of the state of the INSERT toggle.
+Returns:       nothing
+Uses:          EAX, ECX
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   gcursor:near, getkey:near
+
+; data
+x       dw 10,20        ; put the cursor in the character block at (10,20)
+
+; code
+        .
+        .
+        .
+        lea   edx,x
+        call  gcursor
+        call  getkey    ; retrieve the key that was pressed
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GETBITBLOCK:   saves a portion of a graphics screen in memory
+Source:        bitblock.asm ($graph.asm, bb02.asm, bb04.asm, bb06.asm,
+                             bb08.asm, bb10.asm, bb12.asm, bb14.asm,
+                             bb16.asm)
+
+Call with:     ES:[EDI] pointing to memory buffer for the bit block
+               DS:[EBX] pointing to x & y coordinate data
+
+               Note that a bit block copied from a 4-plane mode may
+               only be restored to a 4-plane mode; likewise, a bit
+               block saved from a 2-color mode should be restored to
+               a 2-color mode or to a single bit plane of a 16-color
+               mode.
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+
+
+    If you do not intend to support all ASM32 graphics modes, you can
+    call mode-specific BitBlock subroutines to reduce .EXE size.
+    These subroutines use the same calling parameters as GetBitBlock
+    and PutBitBlock:
+
+
+    getbb02: mode 04h, 05h, 11h, 40h, HGraph (mono and InColor)
+    getbb06: mode 0Dh, 0Eh, 0Fh, 10h, 12h, SVGA16(0), XMODE16
+    getbb08: mode 13h, 256-color GSCREEN
+    getbb10: VGA13X
+    getbb12: SVGA16
+    getbb14: SVGA256
+    getbb16: SVGA32k
+
+    putbb02: mode 04h, 05h, 11h, 40h, HGraph (mono only)
+    putbb04: HGraph (InColor only)
+    putbb06: mode 0Dh, 0Eh, 0Fh, 10h, 12h, SVGA16(0), XMODE16
+    putbb08: mode 13h, 256-color GSCREEN
+    putbb10: VGA13X
+    putbb12: SVGA16
+    putbb14: SVGA256
+    putbb16: SVGA32k
+
+Example on next page
+
+ 
+; example of GetBitBlock use
+
+include model.inc
+
+extrn   bitblockbytes:near, getbitblock:near, putbitblock:near
+
+include dataseg.inc
+ptr     dd ?                ; use this to save pointer to bit block
+x0      dw 100,43,175,143   ; save from (100,43) to (175,143)
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        lea   ebx,x0        ; point to block corners
+        call  bitblockbytes ; calculate byte requirement
+        jc    too_big       ; error control
+        mov   ebx,eax
+        sys   GetMemNear
+        jc    no_memory     ; more error control
+        mov   ptr,esi       ; save near address of bit block
+        mov   edi,esi       ; EDI points to buffer
+        lea   ebx,x0        ; EBX points to coordinate data
+        call  getbitblock
+        .
+        .
+
+; later . . .
+        lea   ebx,x0        ; put the bit block back where you found it
+        mov   edi,ptr       ; EDI points to buffer
+        call  putbitblock
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GETBITPLANE:   saves one plane of a bit block in memory
+Source:        small & medium: bitplane.asm ($graph.asm, bb02.asm, bb04.asm
+                               bb06.asm, bb08.asm, bb10.asm, bb12.asm,
+                               bb14.asm)
+
+Call with:     ES:[EDI] pointing to memory buffer for the bit block
+               DS:[EBX] pointing to x & y coordinate data
+               AL = plane number to save
+               valid plane numbers are 0 - 3 in 16-color modes
+                                       0 & 2 in EGA monochrome mode
+
+               In 16-color modes, EGA/VGA and InColor planes are:
+                0 = blue, 1 = green, 2 = red, 3 = gray (or intensity)
+               In EGA monochrome mode, plane 0 = normal, plane 2 = blink
+                or intensity
+               The actual colors each plane represents may change
+               depending on the values in the pallete registers.
+
+Supports:      all 16-color modes plus EGA monochrome
+               other modes: GetBitPlane works like GetBitBlock
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GETGSCREEN:    copies entire screen image to RAM
+Source:        gscreen.asm ($graph.asm, $gbytes.asm, $plane.asm)
+
+Call with:     no parameters
+               GetGScreen allocatess a block of near memory and copies
+               the entire screen to the memory block in ASM32's BitBlock
+               format.  Using BitBlock format allows the use of ASM32's
+               BB???REV, BB16MASK, BB256OVL and PutBitBlock subroutines
+               with the screen image.  You may use either PutBitBlock
+               or PutGScreen to restore the image; the advantage of
+               PutGScreen is speed, because it is optimized for copying
+               the entire screen.
+
+Returns:       EDI = near address of screen image data
+
+Supports:      all ASM32 graphics modes
+
+Uses:          EDI, flags
+
+Example:       see PutGScreen
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GETVIEW:       returns a pointer to the current view coordinates for
+               the active page
+Source:        getview.asm ($graph.asm)
+
+Call with:     no parameters
+               most ASM32 subroutines, except the GPrint series, Gload,
+               GCopy and GSave, limit their activity to the view region.
+               You may use the returned pointer to change the active
+               portion of the screen; be careful not to exceed the maximum
+               x1 and y1 values permitted by the current mode.  Also, x0
+               must always be less than x1 and y0 must always be less than
+               y1.
+               ASM32's defaults are:
+                x0 = 0
+                y0 = 0
+                x1 = xmax
+                y1 = ymax
+
+               See also ResetView
+
+Returns:       EBX pointing to the current view coordinates
+Uses:          EBX
+Supports:      all ASM32 graphics modes and pages
+Example:
+
+include codeseg.inc
+
+extrn   getview:near
+
+x0 EQU word ptr [EBX]
+y0 EQU word ptr 2[EBX]
+x1 EQU word ptr 4[EBX]
+y1 EQU word ptr 6[EBX]
+
+; code
+        .
+        .
+        .
+        call   getview
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GETDOT:        determine pixel value on graphics screen
+Source:        getdot.asm ($graph.asm, $getdot.asm, others)
+
+Call with:     EBX pointing to pixel coordinate data
+Returns:       if CF = 0, AX = pixel value
+               if CF = 1, pixel coordinates outside active view area
+Uses:          EAX, CF
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   getdot:near
+
+; data
+x       dw 10,10             ; pixel at (10,10)
+
+; code
+        .
+        .
+        .
+        lea    ebx,x         ; point to pixel coordinates
+        call   getdot        ; get pixel value
+        jc     out_of_bounds ; oops
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GLOAD:         loads a graphics screen saved as a disk file by GSave
+Source:        gload.asm ($graph.asm, $gbytes.asm, $reset.asm, $plane.asm)
+
+Call with:     EDX pointing to the name of the file to load
+               the filename must be an ASCIIZ string in low memory
+Returns:       AX = MS-DOS error code
+Uses:          EAX, flags
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   gload:near
+
+; data
+filename db 'graph.bin',0
+
+; code
+        .
+        .
+        lea   edx,filename
+        call  gload
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GPAGE:         changes active and displayed graphics page
+               GPage changes ASM32's default graphics page and displays
+               the page.  See also UseGPage and ShowGPage.
+Source:        gpage1.asm ($graph.asm, $herc.asm, gpage.asm)
+
+Call with:     BL = page number.  See table at start of this GRAPHICS.DOC
+               file.
+Returns:       if CF = 0, no problem
+               if CF = 1, bad page number requested
+Uses:          CF
+Supports:      EGA, VGA, Hercules, InColor: modes with more than one page
+Example:
+
+include codeseg.inc
+
+extrn   gpage:near
+
+; code
+        .
+        .
+        mov    bl,1          ; use and show page 1
+        call   gpage
+        jc     oops          ; uh oh, wrong mode
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GPRINT:        prints ASCIIZ string on a graphics screen
+Source:        gprint.asm ($graph.asm, f8x14.asm, $gp00.asm, $gp02.asm,
+                           $gp06.asm, $gp08.asm, $gp10.asm, others)
+
+Call with:     ESI pointing to the ASCIIZ string
+               EDX pointing to x- and y-coordinate data
+               drawmodes supported by GPrint are:
+                2 = foreground only; background pixels left alone
+                1 = foreground and background pixels updated with
+                    current gcolor
+                0 = foreground color is XORed with the existing screen
+               -1 = like drawmode 1, but foreground and background reversed
+               -2 = like drawmode 2, but uses background color
+               Any pixel position may be specified; does not wrap around
+               from right side of screen to left.  Default character size
+               is 8x8 for CGA modes and modes 0Dh, 0Eh and 13h, 8x14 for
+               others.
+               High ASCII characters are undefined in 8x8 pixel modes
+               unless you call SmallText sometime earlier in the program.
+Returns:       nothing
+Uses:          ECX; all other registers and flags are saved
+Supports:      all ASM32 graphics modes
+               not all drawmodes supported with CGA modes 04h and 05h
+Example:
+
+include codeseg.inc
+
+extrn   gprint:near
+
+; data
+string  db 'print this, if you will',0
+gpos    dw 0,0                          ; print at upper left corner
+
+; code
+        .
+        .
+        .
+        lea   esi,string
+        lea   edx,gpos
+        call  gprint
+
+additional GPRINT information on next page
+ 
+GPRINT will work with user-defined fonts up to 16 pixel rows high in all
+modes with ymax > 200.  GPRINT reads a public data area in FONTDATA.ASM to
+determine the address of the font data, the number of pixel rows per
+character and the byte increment between sucessive character definitions.
+Characters must be 8 pixels wide.
+
+Use $SetFontData in FONTDATA.ASM to set up user-defined fonts.
+
+Example:
+
+include model.inc
+
+extrn   mload:near
+extrn   $SetFontData:near
+
+include dataseg.inc
+
+; data
+
+fname   db 'c:\ramfont\italics.fnt',0   ; 8x14 characters
+; the fonts supplied by Hercules with the Graphics Card Plus and InColor
+; card are a variety of sizes, but in each font file the byte increment
+; is always 16 bytes
+
+@curseg   ends
+
+include codeseg.inc
+
+; code
+        .
+        .
+        lea     edx,fname       ; filename
+        call    mload           ; read file
+        mov     fs,bx           ; font selector
+        xor     eax,eax         ; font offset
+        mov     ebx,2           ; user-defined data
+        mov     dx,100Eh        ; 16 bytes per character, 14-point characters
+        call    $SetFontData    ; set up font pointers etc.
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GPRINTDOWN:    prints ASCIIZ string vertically on graph screen
+GPRINTUP:      prints ASCIIZ string vertically on graph screen
+Source:        gprint.asm ($graph.asm, f8x14.asm, $gp00.asm, $gp02.asm,
+                           $gp06.asm, $gp08.asm, $gp10.asm, others)
+
+Call with:     same as GPrint
+               rotates each character 90 degrees and prints from top
+               downward or from bottom upward.  Character size 8x8.
+
+               Returned data and registers used same as GPrint
+Example:       see GPrint.
+
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GPRINTX:       print string on a graphics screen, double width
+GPRINT2X:      print string on a graphics screen, double size
+GPRINTDOWNX:   print string vertically on graph screen, 2x width
+GPRINTDOWN2X:  print string vertically on graph screen, 2x size
+GPRINTUPX:     print string vertically on graph screen, 2x width
+GPRINTUP2X:    print string vertically on graph screen, 2x size
+Source:        gprintx.asm ($graph.asm, f8x14.asm, $gp00.asm, $gp02.asm,
+                            $gp06.asm, $gp08.asm, $gp10.asm, others)
+
+
+               Variations of GPrint and GPrintDOWN/GPrintUP;
+               GPrintx, GPrintDOWNx and GPrintUPx print characters
+               which are twice as wide as normal; 2x subroutines
+               print the characters twice as wide and twice as high
+               as normal.
+
+               Parameters, supported modes and drawmodes are same as
+               GPrint.  GPrintx and GPrint2x also work with user-defined
+               fonts.  See GPrint.
+Example:       see GPrint.
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GPUTCHR:       print a single character on graphics screen
+Source:        gputchr.asm (gprint.asm)
+
+Call with:     EDX pointing to (x,y) coordinate data
+               AL = character to print
+Returns:       nothing
+Uses:          ECX
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+public  mycode
+extrn   gputchr:near
+
+; data
+xy      dw 10,10        ; (x,y) coordinates for character
+
+; code
+mycode  proc
+; program fragment assumes screen in graphics mode
+        .
+        .
+        .
+        lea     edx,xy   ; EDX points to coordinate data
+        mov     al,'A'
+        call    gputchr
+        .
+        .
+        .
+        ret
+mycode  endp
+        end
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+GSAVE:         saves a graphics screen as a disk file
+               does not compress image
+Source:        gsave.asm ($graph.asm, $gbytes.asm, $reset.asm, $plane.asm)
+
+Call with:     EDX pointing to ASCIIZ filename in low memory
+               disk space requirements vary depending on graphics mode:
+
+                 HGraph  (mono)       32,768 bytes
+                 HGraph  (InColor)   131,072 bytes
+                 VGA13X(0)            64,000 bytes
+                 VGA13X(1)            76,800 bytes
+                 VGA13X(2)           128,000 bytes
+                 VGA13X(3)           172,800 bytes
+                 XMode16  varies; up to 240,000 bytes
+                 VESA6Ah, SVGA16(0)  240,000 bytes
+                 SVGA16(1)           393,216 bytes
+                 SVGA256(0)          256,000 bytes
+                 SVGA256(1)          307,200 bytes
+                 SVGA256(2)          480,000 bytes
+                 SVGA256(3)          786,432 bytes
+                 04h/05h/06h          16,384 bytes
+                 40h                  32,768 bytes
+                 0Dh                  32,000 bytes
+                 0Eh                  64,000 bytes
+                 0Fh                  56,000 bytes
+                 10h                 112,000 bytes
+                 11h                  38,400 bytes
+                 12h                 153,600 bytes
+                 13h                  64,000 bytes
+
+Returns:       if CF = 1, AX = MS-DOS error code
+               if CF = 0, no error
+Uses:          AX, flags
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   gsave:near
+
+; data
+filename db 'graph.bin',0
+
+; code
+        .
+        .
+        .
+        lea   edx,filename        ; point to ASCIIZ filename
+        call  gsave               ; save graph
+        jc    oops                ; do some error control if problem
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+LINEPATTERN:   defines an optional pattern for DrawLine and DrawBox
+Source:        lpattern.asm ($graph.asm)
+
+Call with:     EBX pointing to an ASCIIZ string of up to 8 characters.
+               The bit patterns in each character are used to make dashed
+               or dotted lines. For drawmodes > 0, each pixel in the line
+               is updated with the foreground color if the corresponding
+               bit in the bit pattern is 1.  If the bit in the bit pattern
+               is 0, the corresponding pixel in the line is treated as a
+               background pixel.  LinePattern must be called before each
+               call to a subroutine in drawline.obj if you want the line
+               pattern to be used.
+
+               drawmodes supported are:
+               (monochrome modes)
+                2 = update foreground pixels only
+                1 = update foreground and background pixels
+                0 = XOR the foreground color with the existing image
+               -1 = like drawmode 1, but foreground and background colors
+                    are reversed
+               -2 = like drawmode 2, but foreground and background colors
+                    are reversed
+               (color modes)
+               same as monochrome, plus:
+                3 = OR the foreground pixels with the pre-existing screen
+               -3 = OR the background pixels with the pre-existing screen
+                4 = AND the foreground pixels with the pre-existing screen
+               -4 = AND the background pixels with the pre-existing screen
+
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   linepattern:near, drawline:near
+
+; data
+x0      dw 25,10,301,97          ; line endpoints at (25,10) & (301,97)
+pattern db 4 dup(32,64),0        ; 8 bytes past x0
+
+; code
+        .
+        .
+        lea   ebx,pattern        ; EBX points to bit pattern
+        call  linepattern        ; let drawline know what pattern to use
+        sub   ebx,8              ; point to line endpoint data
+        call  drawline           ; draw a patterned line
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+LOADPCX:       reads a .PCX-format file from disk and unpacks to screen
+Source:        loadpcx.asm ($graph.asm, color16.asm, fopen.asm, fseek.asm,
+                            fget.asm, fgetchr.asm, $plane.asm, $reset.asm)
+
+Call with:     [EDX] pointing to ASCIIZ filename of .PCX file.
+               LoadPCX assumes that the video system is in an appropriate
+               mode for the image; see PCXInfo (GRAPHICS.DOC).
+               The dimensions of the image in the .PCX file need not
+               match the screen dimensions exactly; any 16-color image
+               may be loaded to a 16-color screen; if the image is too
+               large for the video buffer, either the upper left portion
+               of the image is unpacked, or you may re-size the video buffer
+               (see BufferDim) to fit the image.  Any 2-color ("monochrome")
+               image may be loaded to any monochrome screen.
+
+               256-color PCX files intended for the standard 320x200
+               mode 13h may be loaded to the non-standard VGA13X modes.
+               In VGA13X modes with 400 or 480 vertical pixel rows,
+               a 320x200 image is stretched to fit screen proportions.
+Returns:       if CF = 0, no error
+               if CF = 1, AX = DOS error code
+Uses:          AX, flags
+Supports:      All ASM32 graphics modes EXCEPT:
+                  mode 04h, 05h (no palette)
+                  mode 0Fh, EGA monochrome (not tested)
+                  SVGA32k (is there a standard .PCX format for this mode?)
+Example:       see PCXInfo and BufferDim         
+               
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+PUTBITBLOCK:   restores bit block saved by GetBitBlock
+PUTBITPLANE:   restores bit plane saved by GetBitPlane
+Source:        same as GetBitBlock or GetBitPlane
+
+Call with:     DS:[EBX] pointing to upper left corner coordinates
+               ES:[EDI] pointing to buffer with stored bit block
+                PutBitPlane: AL = plane number
+                valid plane numbers for 16-color modes are 0 - 3
+                                    for EGA mode 11h       0 & 2
+
+               Drawmodes supported are:
+                mode 13h, VGA13x, SVGA256:
+                 0 = XOR the bit block with the existing screen (VGA13x only)
+                 1 = replace existing screen area with bit block
+                 2 = replace existing screen with non-zero pixels
+                     in bit block
+
+                HGraph (InColor):
+                 4 = AND the bit block with the existing screen
+                 3 = OR the bit block with the existing screen
+                 1,2 = replace existing screen area with bit block
+                 0 = XOR the bit block with the existing image
+                -1,-2 = replace existing screen area with inverse bit block
+
+                16-color EGA/VGA-type modes and mode 0Fh:
+                 same as InColor, plus:
+                -3 = OR the inverse bit block with the existing screen
+                -4 = AND the inverse bit block with the existing screen
+
+                mode 04h, 05h, 06h, 40h, HGraph (mono), 11h:
+                 4, 1, 0, -1 same as InColor
+                 2, 3 = combine non-zero pixels in the bit block with the
+                        pre-existing image
+                -2 = combine non-zero pixel in the inverse bit block with
+                     the pre-existing screen image
+
+               Most PutBitBlock code ignores View limits (see GetView)
+               but BB08.ASM, BB10.ASM and BB14.ASM (for 256-color modes)
+               clip PutBitBlock operations at View boundaries.
+
+Returns:       nothing
+Uses:          nothing
+Supports:      all ASM32 graphics modes
+Example:       see GetBitBlock
+
+
+bit block formats explained on following pages
+ 
+
+; BIT BLOCK FORMATS
+
+; mode 04h, 05h, 06h Hercules monochrome, 11h, and bit planes
+;
+; the first word in the buffer is the number of pixel rows (vertical)
+; in the bit block; the second word is the number of bytes per screen row;
+; the fifth byte is a bit mask for the last byte of each pixel row.
+; The bit mask = 0FFh for byte-aligned bit blocks.
+
+bblock  dw 15,5              ; 15 rows, 5 bytes per row
+        db 11111110b         ; bit mask for right end of pixel row
+                             ; bit block data follows:
+                             ;  15 rows, 5 bytes per row
+        db 00000000b,10000000b,00000000b,10000000b,00000010b
+        db 00000001b,11000000b,00000001b,11000000b,00000110b
+        db 00000011b,11100000b,00000011b,11100000b,00001100b
+        db 00000111b,01110000b,00000111b,01110000b,00011000b
+        db 00001110b,00111000b,00001110b,00111000b,00110000b
+        db 00011100b,00011100b,00011100b,00011100b,01100000b
+        db 00000001b,11000000b,00000001b,11000000b,11000000b
+        db 00000001b,11000000b,00000001b,11000000b,01100000b
+        db 00000001b,11000000b,00000001b,11000000b,00110000b
+        db 00000001b,11000000b,00000001b,11000000b,00011000b
+        db 00000001b,11000000b,00000001b,11000000b,00001100b
+        db 00000001b,11000000b,00000001b,11000000b,00000110b
+        db 00000001b,11000000b,00000001b,11000000b,00000010b
+        db 00000001b,11000000b,00000001b,11000000b,00000000b
+        db 00000001b,11000000b,00000001b,11000000b,00000000b
+
+; 16-color modes: 0Dh, 0Eh, 10h, 12h, 6Ah, xmode16, InColor:
+; same as above, except there are 4 planes of bit block data
+; i. e., 4 groups of 15-row, 5-byte data; plane 3 is the first
+; block, followed by planes 2, 1, and 0.
+
+; EGA monochrome mode: 0Fh
+; similar to 16-color modes, but there are only 2 groups of bit
+; block data instead of 4
+
+
+; 256-color modes on next page
+ 
+
+; BIT BLOCK FORMATS
+
+; All 256-color modes: no bit mask in the bit block header
+
+red     equ 12                    ; bright red
+blue    equ 1                     ; blue
+
+bblock  dw 12,5                   ; 12 rows, 5 bytes per row
+        db red, red, blue,red, red
+        db red, blue,red, blue,red
+        db blue,red, red, red, blue
+        db red, red, blue,red, red
+        db red, blue,red, blue,red
+        db blue,red, red, red, blue
+        db red, red, blue,red, red
+        db red, blue,red, blue,red
+        db blue,red, red, red, blue
+        db red, red, blue,red, red
+        db red, blue,red, blue,red
+        db blue,red, red, red, blue
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+PUTDOT:        change a pixel on a graphics screen
+Source:        putdot.asm ($graph.asm, $putdot.asm, others)
+
+Call with:     EBX pointing to x & y coordinates
+               Drawmodes supported are:
+               (monochrome)
+                1 = set pixel
+                0 = toggle pixel
+               -1 = erase pixel
+
+               (color modes)
+                3 = OR foreground color with pre-existing pixel
+                1, 2 = replace pixel with foreground color
+                0 = XOR foreground color with pre-existing pixel
+               -1, -2 = replace pixel with background color
+               -3 = OR background color with pre-existing pixel
+Returns:       if CF = 0, no error
+               if CF = 1, pixel coordinates outside active view area
+Uses:          CF; all other registers and flags are saved
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   putdot:near
+
+; data
+extrn   drawmode:byte
+x       dw 100,117            ; pixel at x = 100, y = 117
+
+; code
+        .
+        .
+        .
+        mov   drawmode,1      ; use foreground color
+        lea   ebx,x           ; point to pixel coordinates
+        call  putdot
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+PUTGSCREEN:    copies screen image in RAM to video hardware
+Source:        gscreen.asm ($graph.asm, $gbytes.asm, $plane.asm)
+
+Call with:     EDI = near address of screen image data
+               PutGScreen copies a screen image saved by GetGScreen to
+               the video adapter's screen buffer.  PutGScreen also works
+               with a screen image saved by GetBitBlock, if the "BitBlock"
+               is the entire screen.  You may use either PutBitBlock
+               or PutGScreen to restore the image; the advantage of
+               PutGScreen is speed, because it is optimized for copying
+               the entire screen.
+
+Returns:       if CF = 0, no error
+               if CF = 1, screen image not correct size or format
+
+Supports:      all ASM32 graphics modes
+
+Uses:          flags
+
+Example:
+
+
+extrn	getgscreen:near
+extrn	putgscreen:near
+
+include dataseg.inc
+screen_ptr dd ?
+xy         dw 0,0
+@curseg ends
+
+include codeseg.inc
+; program fragment assumes DS:dataseg
+; and screen in graphics mode
+       call     getgscreen
+       mov      screen_ptr,edi
+       .
+       .
+       .
+; some time later...
+       mov      edi,screen_ptr
+       call     putgscreen           ; restore screen image
+       jc       got_a_problem
+       .
+       .
+
+; error handling code
+got_a_problem:
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+PCXINFO:       read vital information from .PCX-format graphics file
+Source:        pcxinfo.asm
+
+Call with:     [EDX] pointing to ASCIIZ name of .PCX file
+Returns:       [EBX] pointing to PCX information data structure:
+
+               pcx_info struc
+               horiz    dw 0
+               vert     dw 0
+               colors   dw 0
+               planes   db 0
+               xpixels  dw 0
+               ypixels  dw 0
+               pcx_info ends
+
+               horiz and vert are screen dimensions
+               colors: 16 for EGA/VGA 16-color modes, 256 for 256-color modes
+               planes: number of bit planes encoded
+                       4 for 16-color modes, 1 for monochrome, CGA or mode 
+13h
+               xpixels: horizontal image size
+               ypixels: vertical image size
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+RESETVIEW:     restores default view area on active graphics page and
+               returns a pointer to the view data
+Source:        view.asm ($graph.asm)
+
+Call with:     no parameters
+               ResetView restores the default full screen view area.
+               The far pointer returned points to ASM32's data area in
+               $graph.obj for the active graphics page's view coordinates.
+Returns:       EBX pointing to the active page's view data.
+Uses:          EBX; all other registers and flags are saved
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   resetview:near
+
+x0 EQU word ptr [EBX]
+y0 EQU word ptr 2[EBX]
+x1 EQU word ptr 4[EBX]
+y1 EQU word ptr 6[EBX]
+
+; code
+        .
+        .
+        .
+        call  resetview
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+SCREENORIGIN:  control position of re-sized video buffer on screen
+               see also BufferDim in GRAPHICS.DOC
+Source:        scrnorig.asm
+
+Call with:     EBX pointing to upper-left coordinates of logical
+               video buffer to be displayed at upper-left corner of screen.
+Returns:       nothing
+Uses:          nothing
+Supports:      Screen modes re-sized with BufferDim:
+                EGA/VGA 16-color modes
+                VGA13x modes
+                VESA SVGA modes
+Example:       see BufferDim
+
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+SHOWGPAGE:     change graphics page displayed on screen
+               See also UseGPage and GPage.
+Source:        gpage1.asm ($graph.asm, $herc.asm)
+
+Call with:     BL = page number
+Returns:       Carry Flag = error code
+               if CF = 0, no error
+               if CF = 1, bad page number
+Uses:          CF
+Supports:      HGraph (mono and InColor), modes 0Dh, 0Eh, 0Fh, 10h, VGA13X
+Example:
+
+include codeseg.inc
+
+extrn   showgpage:near
+
+; code
+        .
+        .
+        .
+        mov   bl,1           ; show page 1
+        call  showgpage
+        jc    no_page_1      ; no page 1 for this mode
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+SHOWGPLANE:    show one or more planes of multi-plane EGA/VGA screen
+Source:        gplane.asm ($graph.asm)
+
+Call with:     AL = plane mask
+               Bits set in the plane mask correspond to the plane displayed.
+               ASM32's default mask is 00001111b, enabling all 4 planes.
+Returns:       CF = error flag
+               if CF = 0, no error
+               if CF = 1, bad plane mask or graphics mode
+Uses:          CF
+Supports:      EGA & VGA 16-color modes, including VESA 6Ah, xmode16
+                   and SVGA16
+               EGA monochrome: planes 0 and 2
+                   (mask = 00000101b for both planes)
+               Hercules InColor
+Example:
+
+include codeseg.inc
+
+extrn   showgplane:near
+
+; code
+        .
+        .
+        .
+        mov   al,00000101b      ; show planes 0 and 2
+        call  showgplane
+        jc    error             ; error control
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+SMALLTEXT:     change GPrint, GPrintX and GPrint2X default to 8x8 characters
+               in Hercules and modes 10h, 11h, 12h; makes 8x8-size
+               high ASCII characters available to GPrint in all modes
+Source:        smalltxt.asm (f8x8.asm, $graph.asm)
+
+STDTEXT:       restore GPrint default characters (see GPrint)
+Source:        stdtext.asm (f8x14.asm, fontdata.asm)
+
+Call with:     no parameters
+Returns:       nothing
+Uses:          nothing; all registers and flags are saved
+Example:
+
+include codeseg.inc
+
+extrn   smalltext:near, stdtext:near
+
+; code
+        .
+        .
+        .
+; make GPrint use the small 8x8 characters
+; make sure high ASCII characters are available
+        call   smalltext
+        .
+        .
+
+; sometime later, I want to use larger 8x14 characters
+        call   stdtext
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+SYS2UC:        convert system coordinates to user-defined coordinates
+Source:        uc2sys.asm ($graph.asm)
+
+Call with:     EBX pointing to (x0,y0,x1,y1) system coordinates
+Returns:       EBX pointing to (x0,y0,x1,y1) user-defined coordinates
+
+               UCINIT, SYS2UC and UC2SYS allow the programmer to define a
+               graph coordinate system to fit the data, and converts
+               the system's y-orientation from top-to-bottom to the more
+               familiar bottom-to-top
+               SYS2UC and US2SYS maintain a separate data area for converted
+               coordinates; the input coordinates are not changed
+Uses:          EBX
+Supports:      all ASM32 graphics modes; user-defined coordinates
+               from -32767 to +32767; see also UCINIT
+Example:       see UCINIT
+
+
+
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+UC2SYS:        convert user-defined coordinates to system coordinates
+Source:        uc2sys.asm ($graph.asm)
+
+Call with:     EBX pointing to (x0,y0,x1,y1) user-defined coordinates
+Returns:       EBX pointing to (x0,y0,x1,y1) system coordinates
+
+               UCINIT and UC2SYS allow the programmer to define a
+               graph coordinate system to fit the data, and converts
+               the system's y-orientation from top-to-bottom to the more
+               familiar bottom-to-top
+               US2SYS maintains a separate data area for converted
+               coordinates; the input coordinates are not changed
+Uses:          EBX
+Supports:      all ASM32 graphics modes; user-defined coordinates
+               from -32767 to +32767; see also UCINIT
+Example:       see UCINIT
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+UCINIT:        specify user-defined coordinates
+Source:        uc2sys.asm ($graph.asm)
+
+Call with:     EBX pointing to desired xmin, ymin, xmax, ymax
+               coordinates (xmax-xmin < 32767, ymax-ymin < 32767)
+               ASM32's default user coordinates are (0,0,1000,1000)
+Returns:       nothing
+Uses:          nothing
+Example:
+
+; I'm plotting a graph on the screen with x-axis data from 1983 to 2007
+; and y-axis data from -72 to 140
+; I'll leave some space on each side for titles, etc.
+
+extrn   ucinit:near, uc2sys:near
+extrn   drawbox:near
+
+include dataseg.inc
+x0      dw 1975    ; xmin
+y0      dw -80     ; ymin
+x1      dw 2014    ; xmax
+y1      dw 148     ; ymax
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        .
+; establish coordinates
+        lea     ebx,x0
+        call    ucinit
+
+; draw a box around the graph
+        mov     x0,1983
+        mov     y0,-72
+        mov     x1,2007
+        mov     y1,140
+        lea     ebx,x0
+        call    uc2sys
+        call    drawbox
+
+; convert mouse position to user coordiantes
+        mov     ax,3
+        int     33h
+        shl     edx,16
+        mov     dx,cx            ; EDX = x:y mouse coordinates
+        push    edx              ; EDX on stack at SS:ESP
+        mov     ebx,esp          ; EBX points to (x,y) - assumes DS = SS
+        call    sys2uc           ; convert to user coordinate system
+        pop     edx              ; fix the stack
+                                 ; UserX = word at [ebx]
+                                 ; UserY = word at 2[ebx]
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+USEGPAGE:      changes active graphics page used by ASM32
+               does not change page displayed (see GPage and ShowGPage)
+Source:        gpage.asm ($graph.asm, $herc.asm)
+
+Call with:     BL = page number
+Returns:       if CF = 0, no error
+               if CF = 1, bad page number
+Uses:          CF
+Supports:      HGraph (mono and InColor) with Use64k
+               EGA and VGA: modes with more than one page
+Example:
+
+include codeseg.inc
+
+extrn   usegpage:near
+
+; code
+        .
+        .
+        mov   bl,1
+        call  usegpage
+        jc    oops
+
+
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+USEGSCREEN:    use GSCREEN bitblock as screen buffer
+Source:        usegscrn.asm ($graph.asm)
+
+Call with:     EDI = near address of GSCREEN or BitBlock
+               UseGScreen forces ASM32 graphics subroutines to write to
+               the bitblock at [EDI] instead of to the video memory.  Any
+               256-color bitblock in ASM32's bitblock format may be used
+               as the GSCREEN buffer; the bitblock, with its dimensions,
+               becomes the effecive screen buffer.  ASM32 subroutines will
+               write to & read from the bitblock as though it were video
+               memory.  Use ASM32's UseDefaultScreen to resume using the
+               video hardware.  You will need to call UseDefaultScreen
+               before using PutBitBlock or PutGScreen to display the
+               off-screen bitblock.
+
+               The advantages of using an off-screen video buffer include:
+
+               þ Access to RAM is often much faster than to video hardware
+               þ Your program can update screens or bitblocks invisibly,
+                 using normal ASM32 subroutines
+               þ You can use a screen buffer larger than your hardware's
+                 video memory.  See example.
+
+Returns:       nothing
+Uses:          nothing
+Supports:      all 256-color modes
+               all 256-color bitblocks saved in ASM32's bitblock format
+               all ASM32 graphics subroutines except ScreenOrigin,
+                   BufferDim, GPage, GCopy.
+
+ 
+
+(UseGScreen, examples)
+
+Example 0:
+
+extrn   getgscreen:near, putgscreen:near
+extrn   usegscreen:near, usedefaultscreen:near
+extrn   putdot:near
+
+include dataseg.inc
+
+xy              dw 10,100            ; screen x,y coordinates
+screen_ptr      dd ?
+
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+; program fragment assumes DS:dataseg
+; and screen in graphics mode
+        call    getgscreen
+        mov     screen_ptr,edi
+        call    usegscreen           ; use the GSCREEN just created
+                                     ; for all screen updates
+        lea     ebx,xy               ; point to (x,y) coordinates
+        call    putdot               ; updates GSCREEN at (10,100)
+        .
+        .
+        .
+; some time later...
+        call    usedefaultscreen     ; read from/write to video hardware
+        mov     edi,screen_ptr
+        call    putgscreen           ; restore screen image
+        jc      got_a_problem
+        .
+        .
+
+; error handling code
+got_a_problem:
+
+ 
+
+(UseGScreen, examples)
+
+Example 1:
+
+; create a huge off-screen video buffer
+; program will get parts of it later to copy to video hardware
+
+extrn   getgscreen:near, putgscreen:near
+extrn   usegscreen:near, usedefaultscreen:near
+extrn   putdot:near
+
+include dataseg.inc
+
+xy              dw 10,100            ; screen x,y coordinates
+screen_ptr      dd ?
+
+@curseg ends
+
+include codeseg.inc
+        .
+        .
+        .
+; create a 1024 x 1024 buffer
+; need to add 4 bytes for the "bitblocK" header
+        mov     ebx,(1024*1024)+4
+IFDEF   DPMI
+; DPMI version
+        call    GetMemNear
+ELSE
+; CauseWay version
+        sys     GetMemNear
+ENDIF
+        mov     screen_ptr,esi
+
+; set up bitblock header
+        mov     word ptr [esi],1024  ; x-pixels
+        mov     word ptr 2[esi],1024 ; y-pixels
+        mov     edi,esi
+        call    UseGScreen
+ 
+°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+
+VIEWLIMIT:     determine current mode's maximum dimensions
+Source:        view.asm ($graph.asm)
+
+Call with:     no parameters
+Returns:       EBX pointing to xmax
+               EBX+2 pointing to ymax
+Uses:          EBX
+Supports:      all ASM32 graphics modes
+Example:
+
+include codeseg.inc
+
+extrn   viewlimit:near
+
+; code
+        .
+        .
+        call  viewlimit
+
+
+
+

@@ -1,0 +1,5 @@
+PARTS
+=====
+1. Employees THE WORLD AND OBJECTS CONCEPT
+2. PROVIDE THE MAIN EXE PART
+3. makes up link with all the components finaly resulting the application

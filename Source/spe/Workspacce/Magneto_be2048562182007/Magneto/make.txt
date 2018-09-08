@@ -1,0 +1,9 @@
+# Makefile for Magento ver 0.1
+
+
+SRCS = Kernel.cpp
+
+CC = gcc
+LD = ld
+CFLAGS =  -fno-rtti -fno-exceptions -ffreestanding
+LDFLAGS = --script Scripts\link.ld  -o bin\kernel.bin

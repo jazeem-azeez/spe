@@ -1,0 +1,18 @@
+# incdlude <stdio.h>
+# include <conio.h>
+# include <bios.h>
+# include <stdlib.h>
+# include <process.h>
+# include <mouse.h>
+# include <disk.h>
+# include <soundcard.h>
+# include <vesa.h>
+
+char ERROR1	[50][50]=;
+//processor management and other hardware devices
+
+int CHECKHARDWARE()
+{
+
+return ;
+}

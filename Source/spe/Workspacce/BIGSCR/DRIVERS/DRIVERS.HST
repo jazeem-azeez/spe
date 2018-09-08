@@ -1,0 +1,22 @@
+///////////////////////////////////////////////////////
+//                                                   //
+//   Device Driver Class Functions - Version 1.02    //
+//                                                   //
+//           By Kevin Campbell 6/12/96               //
+//                                                   //
+//                                                   //
+///////////////////////////////////////////////////////
+
+/*
+
+	History :-
+
+		V1.02 - 6/12/96 (Unreleased)
+		Added list() function to driver list
+
+		V1.01 - 1/12/96 (Released on GameDev)
+		Added error buffer to driver class
+		Added kill() function
+
+		V1.00 - 21/11/96
+		Basic library

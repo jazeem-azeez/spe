@@ -1,0 +1,117 @@
+# include <dos.h>
+# include <stdio.h>
+# include <conio.h>
+
+//class pcx
+/*
+typedef struct PCXHEAD
+{
+	char manu;
+	char ver;
+	char encoding;
+	char bits_per_pixel;
+	int xmin, ymin;
+	int xmax, ymax;
+	int hres, vres;
+	char pal [48];
+	char reserved;
+	char colo_planes;
+	int bytes_per_line;
+	int pal_type;
+	int hori_scr_size, ver_scr_size;
+	char filler [54];
+	
+	
+};
+
+void setmode(int mode)
+{
+	union regs i,o;
+	i.h.ah=0;
+	i.h.al=mode;
+	int86(16,&i,&o);
+}
+
+void pset(int row,int column, int color)
+{
+	union regs i,o;
+	i.h.ah=0x0c;
+	i.x.bx=0x0;
+	i.h.al=color;
+	i.x.cx=row;
+	i.x.dx=column;
+	int86(0x10,&i,&o);
+}
+
+void main()
+{
+	PCXHEAD header;
+	struct REGS regs;
+	setmode (0x13);
+	FILE * file ;
+	unsigned char buf [3];
+	file =	fopen("flower.pcx","rb");
+	//seeks from beginning of the file and store the information in the header
+	
+	fread(header ,sizeof(PCXHEAD),1,file);
+	int row ,column , color;
+	int xoff=0, yoff=0;//default offset position to start drawing
+	//loacte the center of the screen (320x200)
+	if(header.xmax<320)
+	xoff=(320-(header.xmax-header.xmin))/2;
+	
+	if(header.ymax<200)
+	yoff=(200-(header.ymax-header.ymin))/2;
+	
+	unsigned char data, col;
+	long pos =0, fpos ((long)(header.ymax-header.ymin)+11)*(long)(header.byte_per_line);
+	
+	fseek(file,128l,SEEK_SET);
+	
+	do
+	{
+		fread(&data, 1,1,file);
+		if(data>0xc0)
+		{
+			data&=0x3f;
+			fread(&col, 1, 1 file);
+			for(int times=0; times<data;times ++);
+			{
+				//writing the pixel with with al -color ,bh -page cx -coloumn, dx- row
+				row = pos % (long)(header.bytes_per_line)+xoff;
+				column=pos/ (long)(header.bytes_per_line)+yoff;
+				pset(row, column, col);
+				pos++;
+			}
+		}
+		
+		else
+		{
+			row = pos % (long)(header.bytes_per_line)+xoff;
+			column=pos/ (long)(header.bytes_per_line)+yoff;
+			pset(row, column,data);
+			pos++;
+		}
+		
+	}while(pos<fpos)
+	
+	fseek (file ,768l,SEEK_END);
+	
+	for(int pal=0;pal<256;pal++)
+	{
+		fread(buf,3,1,file);
+		for(int a=0;a<3;a++)
+			buf[a]=buf[a]>>2;
+		// set individual DAC Register
+		regs.x.ax = 0x1010;
+		regs.x.bx = pal;
+		regs.h.dh = buf[0];
+		regs.h.ch = buf[1];
+		regs.h.cl = buf[2];
+		int86(0x10,&regs,&regs);
+	}
+	fclose(file);
+	getch();
+	setmode(0x3);
+
+} */

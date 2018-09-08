@@ -1,0 +1,96 @@
+//1.include and debug headers
+//list of headers
+# include "headerli.cpp"
+# include "app_lin.cpp"
+int setup_platform();
+int setdown_platfrom();
+int Application();
+
+int Show_files(void);
+
+void main()
+{
+RESTART:
+setup_platform();
+cleardevice();
+Enlarge(400,300,"DONE");
+Reduce(400,300,"DONE");
+if(Application()!=0)
+{
+printf("\nSome bug caused the program to abort the operation\n\t Do you want to restart your application (y ,if YES)\t");
+if('y'==getche())
+{
+_cexit();
+setdown_platfrom();
+goto RESTART;
+}
+}
+setdown_platfrom();
+exit(1);
+}
+setdown_platfrom()
+{
+closegraph();
+printf("\n\tThank you\n\t Press any key to exit");
+getch();
+}
+setup_platform()
+{
+textbackground(WHITE);
+textcolor(BLACK);
+highvideo();
+clrscr();
+printf("\n\tStarting :");
+delay(1000);
+printf("\n\tPlease check prerequesties\nShowing Available Files list in the active directory: \n");
+printf("\nName\t\tSize");
+delay(1000);
+Show_files();
+delay(1000);
+printf("\n\tPlease Wait ...");
+delay(1000);
+printf("\nInstalling Devices and Handlers");
+delay(1000);
+initsvga();
+printf("\n\t\t\t\tPreparing Graphics (GL)\n Initializing SVGA 800X600X256 MODE\n");
+delay(2000);
+SetMode(0x103,0);
+delay(1000);
+printf("\nSound device is being setup 0x220\t");
+delay(1000);
+if (ResetDSP(0x220)==1)
+printf("\Found and Reset");
+else
+printf("FAILED\n");
+delay(1000);
+printf("\nSound device is being setup 0x240\t");
+delay(1000);
+if (ResetDSP(0x240)==1)
+printf("\nFound and Reset");
+else
+printf("FAILED\n");
+delay(1000);
+
+return 0;
+}
+int Show_files(void)
+{
+  struct find_t ffblk;
+  int done;
+  done = _dos_findfirst("*.*",_A_NORMAL,&ffblk);
+  while (!done) {
+  if(!kbhit())
+    {
+    printf("\nFilename_> %s\n\t\t\tSize = %ld -bytes,\tdate stamp  = 0x%x\n",ffblk.name,ffblk.size,ffblk.wr_time);
+    delay(100);
+    done = _dos_findnext(&ffblk);
+    }
+    else
+    {
+    getch();
+    printf("Press any key to continue");
+    getch();
+    }
+  }
+  return 0;
+}

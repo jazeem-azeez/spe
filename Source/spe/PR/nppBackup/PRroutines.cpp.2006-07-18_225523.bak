@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <math.h>
+#include <dos.h>
+#include <conio.h>
+#include <c:\spe\pr\vector.h>
+/*
+
+on the basis of Newton Mechaincs
+
+*/
+typedef vec3d force;
+typedef vec3d plane;
+
+force gravity;
+
+int setupPR()
+{
+//run the basics step to set the engine run
+gravity.x=0,gravity.y=-9.8,gravity.z=0;
+return 0;
+}
+
+class particle
+{
+public:
+vec3d lpos;
+vec3d pos,vel,omega;
+unsigned char color;
+float mass;
+
+void changepos(vec3d npos)
+{
+lpos=pos;
+pos=npos;
+}
+
+void changevel(vec3d vel)
+{
+}
+void updtpos()
+{
+pos+=vel;
+lpos=pos;
+}
+}p1;
+
+float cal_acceleration(float vel,float time)
+{
+if(time==0)
+return 0.0;
+else
+return (vel/time);
+}
+
+float cal_kinetic_energy(float mass,float vel)
+{
+return(0.5*mass*vel);
+}
+
+float cal_force(float mass ,float acce)
+{
+return (mass*acce);
+}
+
+float cal_momentum(float mass,float vel)
+{
+return (mass*vel);
+}
+
+float cal_work(float force,float disp)
+{
+return (force*disp);
+}
+
+void main()
+{
+clrscr();
+
+setupPR();
+
+getch();
+}

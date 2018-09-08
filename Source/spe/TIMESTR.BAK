@@ -1,0 +1,15 @@
+
+ #include <stdio.h>
+ #include <time.h>
+ #include <dos.h>
+ #include <stddef.h>
+
+ int main(void)
+ {
+
+  struct dostime_t t;
+  _dos_gettime(&t);
+  printf("@$The current time is: %2d:%02d:%02d.%02d\n", t.hour, t.minute,
+    t.second, t.hsecond);
+  return 0;
+}

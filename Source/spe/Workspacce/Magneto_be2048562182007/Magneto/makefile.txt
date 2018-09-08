@@ -1,0 +1,1 @@
+LDFLAGS = --script Scripts\link.ld  -o bin\kernel.bin

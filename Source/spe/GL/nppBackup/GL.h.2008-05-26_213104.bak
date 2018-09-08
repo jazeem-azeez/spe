@@ -1,0 +1,13 @@
+# include <GLROUTINES.cpp>
+# include <math3d.h>
+# include <additives.cpp>
+# include <>
+//architectrue
+/*
+									     gl---------------------------
+									  /	\			 |
+								mathd.h	glroutines		additives.cpp
+								/	
+							math3d.h	
+
+*/

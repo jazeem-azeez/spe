@@ -1,0 +1,82 @@
+#include <conio.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+#include <c:\spe\pr\vector.h>
+
+#define ismoving	1
+#define isrotating	1
+
+clock_t start, end,lasttimestamp,delta_t;
+
+typedef	vec3d	force;
+typedef	vec3d	plane;
+
+force	gravity;
+
+int init_reactor()
+
+{
+gravity .x=0;
+gravity .y=9.8;
+gravity .z=0;
+}
+
+class particle 
+{
+public: 
+	vec3d pos,lpos,vec,omega,distance,Rpos,LRpos,theta;
+	float acc,trq,mass,TKE,RKE;
+	
+	void 	changeposition(vec3d v1,vec3d v2)
+	{
+	pos=v1;
+	Rpos=v2;
+	}
+	void 	changevel(vec3d v1)
+	{
+	vel=v1;
+	}
+	void 	changeomega(vec3d v1)
+	{
+	omega=v1;
+	}
+	void	changeacc(float a)
+	{
+	acc=a;
+	}
+	void 	changemass(float a)
+	{
+	mass=a;
+	}
+	void 	changetorque(float a)
+	{
+	torque=a;
+	}
+	void	updateposition()
+	{
+	lpos=pos;
+	distance=vel*delta_t;
+	pos=pos+distance;
+	LRpos=Rpos;
+	theta=omega*delta_t;
+	Rpos=Rpos+theta;
+	}
+	void 	update_vel_AND_omega()
+	{
+	vel=acc*(start-end);//velocity=accelaration*total time
+	omega=trq*(start-end);
+	}
+	void 	updateKE()
+	{
+	TKE=0.5*mass*(vel*vel);
+	RKE=0.5*mass*(omega*omega);
+	}
+	void	update()
+	{
+	update_vel_AND_omega();
+	updateKE();
+	updateposition()
+	}
+};

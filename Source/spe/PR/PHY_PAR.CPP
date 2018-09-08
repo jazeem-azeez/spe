@@ -1,0 +1,222 @@
+#include <conio.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define ismoving	1
+#define isrotating	1
+
+
+
+
+
+
+
+class particle
+{
+public:
+	clock_t start, end,lasttimestamp,delta_t;
+	vec3d pos,Rpos;
+	vec3d vel,distance,theta,omega;
+	float acc,trq,_e;
+	float mass;
+	float TKE,RKE;
+
+	void getdata()
+	{
+	float temp;
+	clearviewport();
+	glprintf(" Position Vector details\n");
+	X_glscanf(3,"%lf %lf %lf",&pos.x,&pos.y,&pos.z);
+	glprintf("\n Velocity vector->");
+	X_glscanf(3,"%lf %lf %lf",&vel.x,&vel.y,&vel.z);
+     /*	glprintf("\n Velocity in Meters/second->");
+	X_glscanf(1,"%lf",&temp);
+	vel.x=vel.x*_xscale*temp;
+	vel.y=vel.y*_yscale*temp;
+	vel.z=vel.y*_zscale*temp;
+	*/
+	glprintf("\n Theta vector->");
+	X_glscanf(3,"%lf %lf %lf",&theta.x,&theta.y,&theta.z);
+	glprintf("\n Enter the Mass, Acceleration, Omega, _e");
+	X_glscanf(4,"%lf %lf %lf %lf",&mass,&acc,&trq,&_e);
+	glnextline();
+/*	if(_e==0.0)
+	_e=1.0;*/
+		/*{glprintf("ERrr in input _e==0: changing to _0.01;Grant permission (press y)");
+		if(getch()=='y')
+		_e=0.01;
+		} */
+	}
+	void putdata3d(point3d p)
+	{
+	algo(p);
+	int col=getbkcolor();
+	bar(pg.x,pg.y,pg.x+400,pg.y+160);
+	moveto(pg.x,pg.y);
+	glprintf(" Position Vector details\n");
+	glprintf("(%.2lf,%.2lf,%.2lf)",pos.x,pos.y,pos.z);
+	glprintf("\nVelocity vector");
+	glprintf("(%.2lf,%.2lf,%.2lf)",vel.x,vel.y,vel.z);
+	glprintf("\nTheta vector");
+	glprintf("(%.2lf,%.2lf,%.2lf)",theta.x,theta.y,theta.z);
+	glprintf("Mass,Acceleration,Omega,_e");
+	glprintf("%.2lf%.2lf%.2lf%.2lf",mass,acc,trq,_e);
+	}
+
+	void changeposition(vec3d v1,vec3d v2)
+	{
+	pos=v1;
+	Rpos=v2;
+	}
+
+	void changevel(vec3d v1)
+	{
+	vel=v1;
+	}
+
+	void changeomega(vec3d v1)
+	{
+	omega=v1;
+	}
+
+	void changeacc(float a)
+	{
+	acc=a;
+	}
+
+	void changemass(float a)
+	{
+	mass=a;
+	}
+
+	void changetorque(float a)
+	{
+	trq=a;
+	}
+
+	void updateposition()
+	{
+	/*distance=vel*delta_t;
+	pos=pos+distance;
+
+	theta=omega*delta_t;
+	Rpos=rotate_Deg(Rpos,theta.x,theta.y,theta.z);
+	  */
+	  pos=pos+vel;
+	}
+
+	void 	update_vel_AND_omega()
+	{
+	vel.normalize();
+	if((acc!=0)&&(end-start)!=0)
+	vel=vel*acc*(end-start);//velocity=accelaration*total time
+	omega.normalize();
+	omega=omega*trq*(end-start);
+	}
+
+	void 	updateKE()
+	{
+	TKE=0.5*mass*(vel.length()*vel.length());
+	RKE=0.5*mass*(omega.length()*omega.length());
+	}
+
+	void	update()
+	{
+//	update_vel_AND_omega();
+//	updateKE();
+	updateposition();
+	}
+
+}*pr;
+
+  /*
+int reactor_engine_data_update_link(class particle *px)
+{
+	FLOAT_EXCEPTION
+	{
+		px->update();
+		continue;
+	}
+	else
+	{
+		log("FLOAT ERROR");
+		log("object count");
+		log((" "+max_particle));
+	}
+
+}
+return 0;
+}
+*/
+ /*
+
+
+#include <stdio.h>
+#include <float.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <process.h>
+#include <conio.h>
+
+#ifdef __cplusplus
+    typedef void (*fptr)(int);
+#else
+    typedef void (*fptr)();
+#endif
+
+jmp_buf reenter;
+
+// define a handler for trapping floating   point errors
+void float_trap(int sig)
+{
+   printf("Trapping floating point error,");
+   printf("signal is %d\n",sig);
+   printf("Press a key to continue\n");
+   getch();
+
+//   reset the 8087 chip or emulator to clear
+ // any extraneous garbage
+
+   _fpreset();
+// return to the problem spot
+   longjmp(reenter, -1);
+}
+
+
+int main()
+{
+signal(SIGFPE, (fptr)float_trap);
+
+ int gdriver = DETECT, gmode, errorcode;
+initgraph(&gdriver, &gmode, "");
+line(0, 0, getmaxx(), getmaxy());
+delay(1000);
+//xscale=1.5,yscale=1.5;
+cleardevice();
+p1.getdata();
+drawaxis(5);
+p1.draw();
+delta_t=2;
+end=1;
+start=0;
+p1.acc=1;
+if (setjmp(reenter) == 0)
+   {
+
+while(!kbhit())
+{
+p1.pos=rotate_Deg(p1.pos,0.0);
+p1.update();
+
+p1.draw();
+}
+getch();
+closegraph();  }
+
+else
+printf("Floating point error");
+return 0;
+
+}           */

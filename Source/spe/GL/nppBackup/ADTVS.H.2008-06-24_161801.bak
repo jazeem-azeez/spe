@@ -1,0 +1,45 @@
+# include <c:\spe\GL\bcm.h> // bitmap console manager
+//# include <c:\spe\GL\button.h>
+//# include <c:\spe\GL\mssgebox.h>
+//# include <c:\spe\GL\shadle.cpp>
+//# include <c:\spe\lib\vector.cpp>
+//# include <gui.h>
+/*
+int fliptext(char word[64])
+
+    {
+    outtextxy(10, 1, word);
+    for(x=10; x < 4 * 8 * strlen(word) + 8; x++)
+
+
+		{
+		for(y=0; y<30; y++)
+
+
+			{
+			col = getpixel(x, y);
+			if(col > 0)
+
+
+					{
+					putpixel(x, 60 - y, 3);
+					}
+				}
+			}
+			getch();
+	    }
+*/
+byte page=0;
+
+void pageflip()
+{
+setvisualpage(page);
+setactivepage(1-page);
+page=1-page;
+}
+/*A Simple Funtion to load Bitmap*/
+struct palettetype pal;
+void ldbmp(int x,int y ,char * file_name)
+	{
+		X.put_BMP(x,y,file_name);
+	}

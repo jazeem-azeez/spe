@@ -1,0 +1,37 @@
+#include <process.h>
+#include <stdio.h>
+#include <conio.h>
+
+void spawnl_example(void)
+{
+   int result;
+
+   clrscr();
+   result = spawnl(P_OVERLAY, "TCC.exe", NULL);
+   if (result == -1)
+   {
+      perror("Error from spawnl");
+      exit(1);
+   }
+}
+
+
+void spawnle_example(void)
+{
+   int result;
+
+   clrscr();
+   result = spawnle(P_WAIT, "bcc.exe", NULL, NULL);
+   if (result == -1)
+   {
+      perror("Error from spawnle");
+      exit(1);
+   }
+}
+
+int main(void)
+{
+  spawnl_example();
+//  spawnle_example();
+  return 0;
+}

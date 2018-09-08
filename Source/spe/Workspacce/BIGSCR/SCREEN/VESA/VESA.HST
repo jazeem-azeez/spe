@@ -1,0 +1,24 @@
+///////////////////////////////////////////////////////
+//                                                   //
+//          VESA Screen Driver - V1.01                  //
+//                                                   //
+//           By Kevin Campbell 17/12/96              //
+//                                                   //
+//                                                   //
+///////////////////////////////////////////////////////
+
+/*
+
+	History :-
+
+	V1.01 - 17/12/96
+	Change qplot() func to slower method -
+	Faster method was buggy, won't be used until
+	fixed.
+
+	V1.00 - 16/12/96
+	Basic driver module.
+	Still quite slow, needs optimisation
+	Only mode 0x101 supported.
+	
+*/

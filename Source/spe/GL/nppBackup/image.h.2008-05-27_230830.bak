@@ -1,0 +1,16 @@
+#include <Xbitmap.cpp>
+#include <bmp.cpp>
+//#include <Xpcx.cpp>
+#include <pcx.cpp>
+
+int load_bmp(int x,int y,char filename[8])
+{
+
+return 0;
+}
+
+int load_pcx(int x,int y,char filename[8])
+{
+return 0;
+}
+

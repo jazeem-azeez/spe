@@ -1,0 +1,41 @@
+#ifndef _GLCAM
+#define _GLCAM
+
+#define TURN_ON		1
+#define TURN_OFF	0
+point3d *cam,*Trans;//camera ptr
+point3d *Zoom;
+
+byte camera_rot_on,camera_zoom_on,camera_trans_on;
+void setcamera(point3d *p1)
+{
+cam=p1;
+}
+
+void rotcamera(point3d *p1,double x,double y,double z)
+{
+trans(*p1,x,y,z);
+}
+
+void setcamzoom(point3d *Z)
+{
+Zoom=Z;
+}
+void zoomcamera(point3d &p1,float x,float y,float z )
+{
+//trans(p1,x,y,z);
+p1.x=x,p1.y=y,p1.z=z;
+}         /*
+void setcamtrans(point3d *p1)
+{
+cam=p1;
+}
+
+void transcamera(point3d &p1,double x,double y,double z )
+{
+//trans(*p1,x,y,z);
+p1.x=x,p1.y=y,p1.z=z;
+}       */
+
+
+#endif

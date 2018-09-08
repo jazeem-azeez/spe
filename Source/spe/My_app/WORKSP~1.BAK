@@ -1,0 +1,11 @@
+//1.include and debug headers
+//list of headers
+# include "headerli.cpp"
+void main()
+{
+	Graphinit();
+	ldbmp(0,0,"test.bmp");
+	m.initmouse();
+//	m.();
+	getch();
+}

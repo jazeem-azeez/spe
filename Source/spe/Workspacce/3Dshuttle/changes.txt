@@ -1,0 +1,5 @@
+renamed ->
+prod_cruz ->crosspdt
+norma ->normal
+prod_punto->dotpdt
+unitario->unitarrow

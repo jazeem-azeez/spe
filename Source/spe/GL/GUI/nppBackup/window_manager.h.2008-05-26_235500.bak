@@ -1,0 +1,188 @@
+
+void effect(int sx,int sy,int ex,int ey)
+{
+	char c;
+       //	m.hidemouseptr();
+
+	for(int i=sx,j=sy;j<=ey;j++)
+		for(i=sx;i<=ex;i++)
+		{
+			c=getpixel(i,j);
+			putpixel(i,j,c-8);
+		}
+	for(;(m.moving()==9););
+	for(i=sx,j=sy;j<=ey;j++)
+		for(i=sx;i<=ex;i++)
+		{
+			c=getpixel(i,j);
+			putpixel(i,j,c+8);
+		}
+       //m.showmouseptr();
+}
+/*
+class button
+{
+public:
+short stx,sty,enx,eny;
+int bttn_no;
+
+	button()
+	{
+	stx=gsx;
+	sty=gsy;
+	enx=gex;
+	eby=gny;
+	}
+
+	int drawbutton()
+	{
+	return (drawbmp(buttonindex(bttn_no),stx,sty));
+	}
+
+	void movebtn()
+	{
+	stx+=gsx;
+	sty+=gsy;
+	enx+=gex;
+	eby+=gny;
+	}
+
+};
+*/
+class window_manager
+
+{
+public:
+	//data members
+	char name[16];
+	char *txt;
+	int no;
+	int *sx,*sy,*ex,*ey;
+	int stx,sty;
+	char imagename[16];
+	// member functions
+	int check_name(char *str)
+	{
+	return strcmpi(name,str);
+	}
+
+	window_manager()
+	{
+		name[0]='\0';
+		no=0;
+		txt=NULL;
+	}
+
+	~window_manager()
+	{
+	delete sx,sy,ex,ey;
+	delete txt;
+	}
+	void initiate (char filename [16]);
+
+	window_manager(char filename [16])
+	{
+	initiate (filename);
+	}
+
+	int   choice();
+
+	int movewindow_manager(int x,int y);
+
+	void show()
+	{  		ldbmp(stx,sty,imagename);
+	}
+};
+
+int window_manager :: movewindow_manager(int x,int y)
+
+	{
+	for (int i=0;i<no;i++)
+		sx[i]+=x,sy[i]+=y,ex[i]+=x,ey[i]+=y;
+	stx+=x,sty+=y;
+	show();
+	return 0;
+	}
+
+int window_manager :: choice()
+	{
+	int i;
+	char str[4];
+	for(;;)
+	for (i=0;i<no;i++)
+		{
+		 if (m.ismouse(sx[i],sy[i],ex[i],ey[i])==1)
+			effect(sx[i],sy[i],ex[i],ey[i]);
+
+		if (m.click(sx[i],sy[i],ex[i],ey[i])==1)
+		{
+	      //	setcolor(BLACK);
+	      //	outtextxy(600,400,"Clicked");
+			return i;
+		}
+		if(!kbhit()==0)
+			return getch();
+		}
+	}
+
+
+
+void window_manager :: initiate (char filename [16])
+
+{
+	FILE *datas;
+	char bmpname[16];
+	int i;
+	//strcpy(bmpname,filename);
+	flushall();
+	datas = fopen(filename,"rt");
+	flushall();
+	if (datas==NULL)
+	{printf("Error opening file");
+	exit(0);
+	}
+	flushall();
+	stx=-1,sty=-1;
+	fscanf(datas,"%d %d",&stx,&sty);
+	no=0;
+	//printf("%d,%d",stx,sty);
+	fscanf(datas,"%d",&no);
+	sx= (int *) new int [no];
+	sy= (int *)	new int [no];
+	ex= (int *)	new int [no];
+	ey= (int *)	new int [no];
+	txt=(char*) new char [no][8];
+	//printf("%d",no);
+	for (i=0;i<=no;i++)
+	{
+	fscanf(datas,"%d%d%d%d",&sx[i],&sy[i],&ex[i],&ey[i]);
+	}
+	fclose(datas);
+
+	for(i=0;filename[i]!='.'&&filename[i]!='\0';i++);
+
+	filename[i+1]='b',filename[i+2]='m',filename[i+3]='p',filename[i+4]='\0';
+	m.hidemouseptr();
+	strcpy(imagename,filename);
+	strncpy(name,filename,i);
+	name[i]='\0';
+	//printf("%s",name);
+	//m.showmouseptr();
+}
+/*
+void main()
+{
+int gdriver = VGA, gmode=VGAMED, errorcode;
+int x, y;
+
+initgraph(&gdriver, &gmode, "");
+
+
+window_manager c1("config.con");
+m.initmouse();
+m.showmouseptr();
+for(;(x=c1.choice())!=0;);
+
+//getch();
+closegraph();
+}*/

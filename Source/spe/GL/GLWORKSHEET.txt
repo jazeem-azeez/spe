@@ -1,0 +1,19 @@
+PARTS
+=====
+1.Load and make able to initiate with diffrent graphics modes
+2.Set access to hardware such as mouse, vga_memory,Sound and so other additves
+=>(3dgl)?
+---------
+3.make a class equiped to load data of an object from file and to manipulate it basic functions such as
+=====================================
+A1. moving it from one point to another
+A2. rotating it form one state to another
+A3. scaling (and shearing of objects if possible) form one to another
+A4. zooming and toher additive features
+=======================================
+4. performing the above with images
+=======================================
+5. SCROLLING OF SPACE;(INCLUDING CAMARA)
+
+
+>=RENDERING???..........

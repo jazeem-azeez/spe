@@ -1,0 +1,62 @@
+//ERROR IN DESIGN
+
+
+
+# include <vec3d.h>
+
+#define recalc_N() N=crosspdt(V,E)
+#define recalc_E() E=crosspdt(N,V)
+
+
+
+
+class camara 
+{
+public:
+
+float scaling_factor = 1;
+float inc_scaling_factor = 1.01;
+
+const float d_eye_cent_default = 300;
+const float inc_d_eye_cent = 10;
+float d_eye_cent = d_eye_cent_default;
+const float ang = 0.1;
+
+
+int xcen, ycen;
+
+vec3d E(1,0,0), N(0,1,0), V(0,0,1);
+
+vec3d EYE (-100,0,0);
+
+float p = 100;
+
+vec3d rot_p_en_v (vec3d X, vec3d U, float w)
+{
+	U = unit (U);
+	float Xu = dotpdt (X,U);
+	vec3d Xu_por_U = Xu * U;
+	return Xu_por_U + cos(w)*(X-Xu_por_U) + sin(w)*crosspdt(U,X);
+}
+
+vec3d pnormal (vec3d X)
+{
+	return (X + (p - dotpdt(V,X))*V);
+}
+
+vec3d central (vec3d X)
+{
+	return (X + ((p - dotpdt(V,X))/dotpdt(V,X-EYE)) * (X-EYE));
+}
+
+pointtype pointplotter (vec3d PLANO)
+{
+	pointtype p;
+	p.x = (int) (xcen + scaling_factor*dotpdt(PLANO,E));
+	p.y = (int) (ycen - scaling_factor*dotpdt(PLANO,N));
+	return p;
+}
+
+
+
+};

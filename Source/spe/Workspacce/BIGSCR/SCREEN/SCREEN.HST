@@ -1,0 +1,22 @@
+///////////////////////////////////////////////////////
+//                                                   //
+//              Screen Library - V1.00                  //
+//                                                   //
+//           By Kevin Campbell 16/12/96              //
+//                                                   //
+//                                                   //
+///////////////////////////////////////////////////////
+
+/*
+
+        History :-
+
+	V1.10 - 26/2/97 (Released on Gamedev, Deimos web-site, Deimos BBS)
+	Revised documentation.
+	Re-packaged product together with linked-list library and all drivers.
+	Added buffing for VGA mode.
+
+	V1.00 - 16/12/96 (Released on Gamedev, Deimos web-site, Locomotion BBS)
+	Basic library
+
+*/

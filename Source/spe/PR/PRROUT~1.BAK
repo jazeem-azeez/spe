@@ -1,0 +1,6 @@
+#include <stdio.h>
+#include <math.h>
+#include <dos.h>
+#include <conio.h>
+#include <c:\spe\pr\vector.h>
+#include <c:\spe\pr\particleX.cpp>

@@ -1,0 +1,207 @@
+
+#include<dos.h>
+
+# define RIGHT		0
+# define LEFT  		1
+# define UP		2
+# define DOWN		3
+# define UPRIGTH 	4
+# define UPLEFT 	5
+# define DOWNRIGHT	6
+# define DOWNLEFT	7
+# define NOTMOVED 	9
+
+union REGS i,o;
+struct SREGS s;
+
+
+
+int getmouseptr(int *button,int *x,int *y)
+
+  {
+    i.x.ax=3;
+    int86(0x33,&i,&o);
+    *button=o.x.bx;
+    *x=o.x.cx;
+    *y=o.x.dx;
+    return 0;
+  }
+
+class mouse
+{
+public:
+	int button,x,y,oldxx,oldyy,clickbtn;
+	int click_delay;
+	int initmouse();
+	void showmouseptr();
+	void restrictmouseptr(int x1,int y1,int x2,int y2);
+	void getmousepos();
+	void hidemouseptr();
+	ismouse(int x1,int y1,int x2,int y2);
+	int click(int x1,int y1,int x2,int y2);
+
+	int moving( );
+	
+
+	void togglemouse()
+
+	{
+	if(clickbtn==1)
+	clickbtn+=1;
+	else
+	clickbtn-=1;
+	}
+
+	void setmouse(int x,int y)
+	{
+	i.x.ax=4;
+	int86(0x33,&i,&o);
+	i.x.cx=x;
+	int86(0x33,&i,&o);
+	i.x.dx=y;
+	int86(0x33,&i,&o);
+	}
+
+	void show_mouse_cord(int sx,int sy)
+	{
+	getmousepos();
+	setcolor(BLACK);
+	char str1[23],str2[6];
+	itoa(x,str1,10);
+	itoa(y,str2,10);
+	strncat(str1," x ",3);
+	strncat(str1,str2,4);
+	bar(sx-1,sy-1,sx+CHARWIDTH*7,sy+CHARHEIGHT);
+	outtextxy(sx,sy,str1);
+	delay(10);
+	}
+}m;
+
+int mouse::initmouse()
+  {clickbtn=1;
+   i.x.ax=0;
+   int86(0x33,&i,&o);
+   return(o.x.ax);
+  }
+
+
+void mouse:: showmouseptr()
+  {
+    i.x.ax=1;
+    int86(0x33,&i,&o);
+
+  }
+
+
+void mouse:: hidemouseptr()
+  {
+    i.x.ax=2;
+    int86(0x33,&i,&o);
+
+  }
+
+
+void mouse::restrictmouseptr(int x1,int y1,int x2,int y2)
+
+{
+_AX=7;
+_CX=x1;
+_DX=x2;
+geninterrupt(0x33);
+_AX=8;
+_CX=y1;
+_DX=y2;
+geninterrupt(0x33);
+}
+
+void mouse::getmousepos()
+{
+oldxx=x,oldyy=y;
+getmouseptr(&button,&x,&y);
+}
+
+int mouse::ismouse(int x1,int y1,int x2,int y2)
+
+{
+getmousepos();
+
+	if(x>x1 && x<x2 && y>y1 && y<y2)
+	{
+	//outtextxy(550,50,"clicked");
+return 1;
+	}
+	return 0;
+}
+
+int mouse::click(int x1,int y1,int x2,int y2)
+
+{
+getmousepos();
+
+	if(x>x1&&x<x2&&y>y1&&y<y2&&(button==clickbtn))
+	{
+	//outtextxy(550,50,"clicked");
+return 1;
+	}
+	return 0;
+}
+
+int mouse :: moving()
+
+{
+
+getmousepos();
+	if (x > oldxx && y == oldyy ) return RIGHT;
+	if (x < oldxx && y == oldyy ) return LEFT;
+	if (y < oldyy && x == oldxx ) return UP;
+	if (y > oldyy && x == oldxx) return DOWN;
+
+	if (x > oldxx && y > oldyy ) return UPRIGTH;
+	if (x > oldxx && y < oldyy ) return DOWNRIGHT;
+
+	if (x < oldxx && y > oldyy ) return UPLEFT;
+	if (x < oldxx && y < oldyy ) return DOWNLEFT;
+
+return 9;
+}
+     /*
+int  mouse :: doubleclick(int x1,int y1,int x2,int y2)
+{
+clock_t start, end;
+getmousepos();
+short ans=0;
+start = clock();
+if(x>x1&&x<x2&&y>y1&&y<y2&&(button==clickbtn))
+	{
+	ans=1;
+	button=0;
+       for(;( (end - start)/CLK_TCK)>=click_delay);)
+		{
+		end = clock();
+		getmousepos();
+		if(x>x1 && x<x2 && y>y1 && y<y2 && (button==clickbtn))
+			{
+			ans=2;
+			break;
+			}
+		}
+	}
+return ans;
+}      */
+void change_cursor(int *shape)
+{
+	i.x.ax=9;
+	i.x.bx=0;
+	i.x.cx=0;
+	i.x.dx=(unsigned)shape;
+	segread(&s);
+	s.es=s.ds;
+	int86x(0x33,&i,&o,&s);
+}
+void set_mouse_position(int x,int y)
+{
+	i.x.ax=4;
+	i.x.cx=x;
+	i.x.dx=y;
+	int86(0x33,&i,&o);
+}

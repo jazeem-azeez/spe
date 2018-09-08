@@ -1,0 +1,22 @@
+void command(char para[32])
+{
+restorecrtmode();
+textmode(0x3);
+HideMouse();
+system(para);
+SetMode(_800x600,1);
+setgraphmode(getgraphmode());
+}
+int Configure()
+{
+clearviewport();
+glprintf("Command:-");
+strcpy(msg," ");
+gin();
+if(strcmp(msg,"sysinfo")==0)
+	sysinfo();
+else
+	command(msg);
+getch();
+return 0;
+}

@@ -1,0 +1,42 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: portscanmain - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "H:\DOCUME~1\fnf\IMPOST~1\Temp\RSPD.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Debug/portscanmain.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\spe\portscanmain.c"
+]
+Creating command line "cl.exe @H:\DOCUME~1\fnf\IMPOST~1\Temp\RSPD.tmp" 
+<h3>Output Window</h3>
+Compiling...
+portscanmain.c
+c:\spe\portscanmain.c(15) : error C2143: syntax error : missing ';' before 'type'
+c:\spe\portscanmain.c(16) : error C2143: syntax error : missing ';' before 'type'
+c:\spe\portscanmain.c(17) : error C2143: syntax error : missing ';' before 'type'
+c:\spe\portscanmain.c(18) : error C2143: syntax error : missing ';' before 'type'
+c:\spe\portscanmain.c(19) : error C2143: syntax error : missing ';' before 'type'
+c:\spe\portscanmain.c(21) : error C2065: 'he' : undeclared identifier
+c:\spe\portscanmain.c(21) : warning C4047: '=' : 'int ' differs in levels of indirection from 'struct hostent *'
+c:\spe\portscanmain.c(21) : warning C4047: '==' : 'int ' differs in levels of indirection from 'void *'
+c:\spe\portscanmain.c(31) : error C2065: 'start' : undeclared identifier
+c:\spe\portscanmain.c(31) : error C2065: 'end' : undeclared identifier
+c:\spe\portscanmain.c(32) : error C2065: 'sock' : undeclared identifier
+c:\spe\portscanmain.c(38) : error C2065: 'host' : undeclared identifier
+c:\spe\portscanmain.c(38) : error C2224: left of '.sin_family' must have struct/union type
+c:\spe\portscanmain.c(39) : error C2224: left of '.sin_port' must have struct/union type
+c:\spe\portscanmain.c(40) : error C2224: left of '.sin_addr' must have struct/union type
+c:\spe\portscanmain.c(40) : error C2223: left of '->h_addr_list' must point to struct/union
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+portscanmain.obj - 14 error(s), 2 warning(s)
+</pre>
+</body>
+</html>

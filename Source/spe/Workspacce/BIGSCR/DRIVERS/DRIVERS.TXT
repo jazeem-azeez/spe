@@ -1,0 +1,96 @@
+
+		Device Driver Library Functions              
+
+		By Kevin Campbell - 1/12/96                 
+ 
+
+Introduction
+============
+
+DOS, it's nice and icky and one of it's greatest drawbacks in the lack of a decent generic interface for interface to use. Device drivers are perhaps the only decent solution to this problem. To make this a more feasible solution, I've created this library. Basically it allows device drivers to be created that share a common interface with the minimum of fuss. 
+
+Currently this library only supports inline drivers, but I should add loadable device driver functionality to it sooner or later.
+
+Last Minute Notes
+===============
+
+1: This file requires the linklist library I created also. You should be able to find this file on Compuserve's GameDev or wherever else you got this file.
+
+2: There seems to be a strange bug in this library whilst using small memory models where a 'Null Pointer Assignment' is detected when the program finishes. It doesn't appear to be a serious problem, but I'll look at it in more depth later.
+
+
+Packing List
+===============
+
+The files included in this package are
+
+        Drivers.CPP - The C++ code for the device driver library
+
+        Drivers.H - The Header File for the device driver library
+
+        Drivers.Txt - This File.
+
+
+How to use the device driver library
+=================
+
+To use the library is fairly simple. All you have to do is #include the drivers.h file and add the drivers.cpp file to your project list (if your compiler has a project list).
+
+*Note drivers.cpp is a C++ file and won't run on C compilers.
+
+This code has been tested under Borland's Turbo C++ 3.0 for DOS and should work on most 16-bit DOS compilers. If it doesn't work on your compiler please contact me and I'll try and fix it.
+
+
+How Linked-Lists work
+=================
+
+Basically a Linked-List is a structure which has pointers to other strucutres. You really don't need to know how it works, you've got the linklist library to take care of that for you :)
+
+
+About this product
+=================
+
+This product is supplied free of charge, however I would appreciate a credit in any work that this file is used in. If you register for future updates however (see register.txt), you will recieve the latest versions of this library as it is made availible, and much more.
+
+If your are distributing this file, or uploading it to a BBS, please use the original, unaltered self-extracting archive the these files came in. Feel free to distribute this as much as you want, just as long as it's not altered in any way.
+
+
+How to contact me
+=================
+
+Please send you money, error-reports, questions, etc. etc. to me:
+
+        E-Mail
+        ======
+
+        Compuserve: 106053,1120
+        Internet: Kev_Camp@compuserve.com
+
+        Snail-Mail
+        =========
+
+        Kevin Campbell
+        20 Leman Drive
+        Houston
+        Renfrewshire
+        Scotland
+
+        PA6 7LN
+
+
+Legal Stuff
+===========
+
+Disclaimer:
+
+The author (Kevin Campbell) specifically disclaims all warranties,
+expressed or implied, including but not limited to implied warranties of
+merchantability and fitness for a particular purpose with respect to defects
+in the software and documentation.
+
+In no event shall the author be liable for any loss of profit or damage,
+including but not limited to special, incidental, or consequential damages.
+
+All product names, trademarks and registered trademarks contained in this
+document are the property of their respective holders.
+
